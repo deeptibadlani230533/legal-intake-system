@@ -64,7 +64,7 @@ export default function DocumentManager({ caseId, role }) {
   const fetchDocuments = async () => {
     try {
       const res = await fetch(
-        `http://localhost:3000/api/documents/case/${caseId}`,
+        `${import.meta.env.VITE_API_URL}/api/documents/case/${caseId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -94,7 +94,7 @@ export default function DocumentManager({ caseId, role }) {
     setUploading(true);
 
     try {
-      const res = await fetch("http://localhost:3000/api/documents", {
+      const res = await fetch("${import.meta.env.VITE_API_URL}/api/documents", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -124,7 +124,7 @@ export default function DocumentManager({ caseId, role }) {
   const handleDownload = async (docId, fileName) => {
     try {
       const res = await fetch(
-        `http://localhost:3000/api/documents/${docId}/download`,
+        `${import.meta.env.VITE_API_URL}/api/documents/${docId}/download`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -153,7 +153,7 @@ export default function DocumentManager({ caseId, role }) {
 
   try {
     const res = await fetch(
-      `http://localhost:3000/api/documents/${selectedDoc.id}`,
+      `${import.meta.env.VITE_API_URL}/api/documents/${selectedDoc.id}`,
       {
         method: "DELETE",
         headers: {

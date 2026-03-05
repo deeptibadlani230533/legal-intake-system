@@ -15,7 +15,7 @@ export default function ActivityTimeline({ caseId,refreshKey }) {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `http://localhost:3000/api/cases/${caseId}/activity`,
+        `${import.meta.env.VITE_API_URL}/api/cases/${caseId}/activity`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

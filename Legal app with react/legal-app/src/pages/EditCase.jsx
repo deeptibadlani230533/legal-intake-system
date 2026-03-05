@@ -16,7 +16,7 @@ export default function EditCase() {
         const token = localStorage.getItem("token");
 
         const res = await fetch(
-          `http://localhost:3000/api/cases/${id}`,
+          `${import.meta.env.VITE_API_URL}/api/cases/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -56,7 +56,7 @@ export default function EditCase() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `http://localhost:3000/api/cases/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/cases/${id}`,
         {
           method: "PUT",
           headers: {

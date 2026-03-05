@@ -14,7 +14,7 @@ export default function Reports() {
     const fetchCases = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:3000/api/cases", {
+        const res = await fetch("${import.meta.env.VITE_API_URL}/api/cases", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
