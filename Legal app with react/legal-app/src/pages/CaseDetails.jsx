@@ -83,6 +83,58 @@ export default function CaseDetail() {
   }
 };
 
+const handleAcceptCase = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await apiFetch(`/api/cases/${id}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: "in_progress" }),
+    });
+
+    if (!res.ok) throw new Error("Accept failed");
+
+    setCaseData((prev) => ({ ...prev, status: "in_progress" }));
+    setActivityRefresh((prev) => prev + 1);
+
+    toast.success("Case accepted successfully");
+
+  } catch (err) {
+    toast.error("Failed to accept case");
+  }
+};
+
+
+const handleCloseCase = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await apiFetch(`/api/cases/${id}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: "closed" }),
+    });
+
+    if (!res.ok) throw new Error("Close failed");
+
+    setCaseData((prev) => ({ ...prev, status: "closed" }));
+    setActivityRefresh((prev) => prev + 1);
+
+    toast.success("Case closed");
+
+  } catch (err) {
+    toast.error("Failed to close case");
+  }
+};
+
+
   const handleGenerateReport = () => {
     if (!caseData) return;
     
@@ -234,37 +286,76 @@ export default function CaseDetail() {
           <div className="space-y-8 lg:sticky lg:top-24">
             <DocumentManager caseId={id} role={role} />
 
-            {role === "admin" && (
-              <Card className="border-blue-100 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 shadow-sm rounded-2xl">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-xs font-bold uppercase tracking-widest text-blue-700 flex items-center gap-2">
-                    <ShieldCheck className="w-3.5 h-3.5" /> Administrative Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-blue-900/60 text-[10px] font-bold uppercase ml-1">Update Case Status</Label>
-                    <Select value={caseData.status} onValueChange={handleStatusChange}>
-                      <SelectTrigger className="bg-white border-blue-200/60 rounded-xl">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="closed">Closed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <Button 
-                    onClick={handleGenerateReport} 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-11 shadow-md shadow-blue-100 transition-all font-bold flex items-center justify-center gap-2"
-                  >
-                    <FileText className="w-4 h-4" /> Generate Case Report
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+            {/* LAWYER ACTIONS */}
+{role === "lawyer" && (
+  <Card className="border-emerald-100 bg-emerald-50/40 shadow-sm rounded-2xl">
+    <CardHeader className="pb-3">
+      <CardTitle className="text-xs font-bold uppercase tracking-widest text-emerald-700 flex items-center gap-2">
+        <Shield className="w-3.5 h-3.5" />
+        Lawyer Actions
+      </CardTitle>
+    </CardHeader>
+
+    <CardContent className="space-y-4">
+      {caseData.status === "open" && (
+        <Button
+          onClick={handleAcceptCase}
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
+        >
+          Accept Case
+        </Button>
+      )}
+
+      {caseData.status === "in_progress" && (
+        <Button
+          onClick={handleCloseCase}
+          className="w-full bg-slate-800 hover:bg-slate-900 text-white rounded-xl"
+        >
+          Close Case
+        </Button>
+      )}
+    </CardContent>
+  </Card>
+)}
+
+{/* ADMIN ACTIONS */}
+{role === "admin" && (
+  <Card className="border-blue-100 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 shadow-sm rounded-2xl">
+    <CardHeader className="pb-3">
+      <CardTitle className="text-xs font-bold uppercase tracking-widest text-blue-700 flex items-center gap-2">
+        <ShieldCheck className="w-3.5 h-3.5" /> Administrative Actions
+      </CardTitle>
+    </CardHeader>
+
+    <CardContent className="space-y-4">
+      <div className="space-y-2">
+        <Label className="text-blue-900/60 text-[10px] font-bold uppercase ml-1">
+          Update Case Status
+        </Label>
+
+        <Select value={caseData.status} onValueChange={handleStatusChange}>
+          <SelectTrigger className="bg-white border-blue-200/60 rounded-xl">
+            <SelectValue />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="closed">Closed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Button
+        onClick={handleGenerateReport}
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-11 shadow-md shadow-blue-100 transition-all font-bold flex items-center justify-center gap-2"
+      >
+        <FileText className="w-4 h-4" />
+        Generate Case Report
+      </Button>
+    </CardContent>
+  </Card>
+)}
 
             <Card className="border-slate-200/60 shadow-sm rounded-2xl bg-white p-6 space-y-4">
               <div className="flex items-center gap-2 text-blue-500">
