@@ -45,9 +45,9 @@ export default function CaseDetail() {
     const fetchCase = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await API_BASE_URL/api/cases/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(`${API_BASE_URL}/api/cases/${id}`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
         const data = await res.json();
         if (!res.ok) throw new Error(data.message);
         setCaseData(data);
@@ -59,25 +59,29 @@ export default function CaseDetail() {
     fetchCase();
   }, [id]);
 
-  const handleStatusChange = async (newStatus) => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await API_BASE_URL/api/cases/${id}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) throw new Error("Update failed");
-      setCaseData((prev) => ({ ...prev, status: newStatus }));
-      setActivityRefresh((prev) => prev + 1);
-      toast.success(`Status updated to ${newStatus}`);
-    } catch (err) {
-      toast.error("Failed to update status.");
-    }
-  };
+ const handleStatusChange = async (newStatus) => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API_BASE_URL}/api/cases/${id}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    if (!res.ok) throw new Error("Update failed");
+
+    setCaseData((prev) => ({ ...prev, status: newStatus }));
+    setActivityRefresh((prev) => prev + 1);
+    toast.success(`Status updated to ${newStatus}`);
+
+  } catch (err) {
+    toast.error("Failed to update status.");
+  }
+};
 
   const handleGenerateReport = () => {
     if (!caseData) return;
