@@ -140,7 +140,7 @@ export default function CaseDetail() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify({ assignedLawyerId: lawyerId })
+      body: JSON.stringify({ lawyerId })
     });
 
     if (!res.ok) throw new Error();
