@@ -10,7 +10,9 @@ const caseRoutes = require("./routes/caseRoutes.js");
 const userRoutes = require("./routes/userRoutes.js");
 app.setErrorHandler(require("./utils/errorHandler"));
 app.register(cors, {
-  origin: true
+  origin: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 });
 
 app.register(require("./plugins/jwt"));
