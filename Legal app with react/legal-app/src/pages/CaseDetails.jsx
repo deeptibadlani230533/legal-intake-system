@@ -260,14 +260,14 @@ export default function CaseDetail() {
 
                 <CardContent className="space-y-4">
 
-                  {caseData.status === "open" && (
-                    <Button
-                      onClick={handleAcceptCase}
-                      className="w-full bg-emerald-600 text-white"
-                    >
-                      Accept Case
-                    </Button>
-                  )}
+                 {(caseData.status === "open" || caseData.status === "assigned") && (
+  <Button
+    onClick={handleAcceptCase}
+    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
+  >
+    Accept Case
+  </Button>
+)}
 
                   {caseData.status === "in_progress" && (
                     <Button
