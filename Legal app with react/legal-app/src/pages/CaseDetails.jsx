@@ -45,7 +45,7 @@ export default function CaseDetail() {
     const fetchCase = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/cases/${id}`, {
+        const res = await API_BASE_URL/api/cases/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -62,7 +62,7 @@ export default function CaseDetail() {
   const handleStatusChange = async (newStatus) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/cases/${id}/status`, {
+      const res = await API_BASE_URL/api/cases/${id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
