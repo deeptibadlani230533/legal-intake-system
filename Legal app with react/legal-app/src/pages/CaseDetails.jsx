@@ -99,58 +99,40 @@ export default function CaseDetail() {
   };
 
   const handleAcceptCase = async () => {
+  try {
+    const res = await apiFetch(`/api/cases/${id}/accept`, {
+      method: "PATCH",
+    });
 
-    try {
+    if (!res.ok) throw new Error("Accept failed");
 
-      const token = localStorage.getItem("token");
+    setCaseData((prev) => ({ ...prev, status: "in_progress" }));
+    setActivityRefresh((prev) => prev + 1);
 
-      const res = await apiFetch(`/api/cases/${id}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: "in_progress" }),
-      });
+    toast.success("Case accepted successfully");
 
-      if (!res.ok) throw new Error("Accept failed");
+  } catch (err) {
+    toast.error("Failed to accept case");
+  }
+};
 
-      setCaseData((prev) => ({ ...prev, status: "in_progress" }));
-      setActivityRefresh((prev) => prev + 1);
+const handleCloseCase = async () => {
+  try {
+    const res = await apiFetch(`/api/cases/${id}/close`, {
+      method: "PATCH",
+    });
 
-      toast.success("Case accepted successfully");
+    if (!res.ok) throw new Error("Close failed");
 
-    } catch (err) {
-      toast.error("Failed to accept case");
-    }
-  };
+    setCaseData((prev) => ({ ...prev, status: "closed" }));
+    setActivityRefresh((prev) => prev + 1);
 
-  const handleCloseCase = async () => {
+    toast.success("Case closed");
 
-    try {
-
-      const token = localStorage.getItem("token");
-
-      const res = await apiFetch(`/api/cases/${id}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: "closed" }),
-      });
-
-      if (!res.ok) throw new Error("Close failed");
-
-      setCaseData((prev) => ({ ...prev, status: "closed" }));
-      setActivityRefresh((prev) => prev + 1);
-
-      toast.success("Case closed");
-
-    } catch (err) {
-      toast.error("Failed to close case");
-    }
-  };
+  } catch (err) {
+    toast.error("Failed to close case");
+  }
+};
 
   const handleGenerateReport = () => {
 
