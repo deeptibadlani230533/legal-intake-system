@@ -31,6 +31,7 @@ import DocumentManager from "../components/DocumentManager";
 import ActivityTimeline from "../components/ActivityTimeline";
 
 const statusColors = {
+  open: "bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-inset ring-emerald-600/20",
   assigned: "bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-inset ring-amber-600/20",
   in_progress: "bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-inset ring-blue-600/20",
   closed: "bg-slate-50 text-slate-600 border-slate-200 ring-1 ring-inset ring-slate-600/20",
@@ -128,6 +129,35 @@ export default function CaseDetail() {
       toast.error("Failed to update status");
     }
   };
+
+  const handleAssignLawyer = async (lawyerId) => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await apiFetch(`/api/cases/${id}/assign`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ assignedLawyerId: lawyerId })
+    });
+
+    if (!res.ok) throw new Error();
+
+    setCaseData((prev) => ({
+      ...prev,
+      status: "assigned",
+      assignedLawyerId: lawyerId
+    }));
+
+    setActivityRefresh((prev) => prev + 1);
+    toast.success("Lawyer assigned successfully");
+
+  } catch {
+    toast.error("Failed to assign lawyer");
+  }
+};
 
   const handleGenerateReport = () => {
     if (!caseData) return;
@@ -330,63 +360,98 @@ export default function CaseDetail() {
             <DocumentManager caseId={id} role={role} />
 
             {/* LAWYER ACTIONS */}
-            {role === "lawyer" && (
-              <Card className="border-blue-100 bg-blue-50/30">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-blue-800">Lawyer Controls</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {caseData.status === "assigned" && (
-                    <Button
-                      onClick={handleAcceptCase}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg shadow-blue-200"
-                    >
-                      Accept Case
-                    </Button>
-                  )}
-                  {caseData.status === "in_progress" && (
-                    <Button
-                      onClick={handleCloseCase}
-                      className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold"
-                    >
-                      Close Case
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+           {role === "lawyer" && (
+  <Card className="border-blue-100 bg-blue-50/30">
+    <CardHeader className="pb-3">
+      <CardTitle className="text-sm font-bold uppercase tracking-wider text-blue-800">
+        Lawyer Controls
+      </CardTitle>
+    </CardHeader>
+
+    <CardContent className="space-y-3">
+
+      {caseData.status === "assigned" && (
+        <Button
+          onClick={handleAcceptCase}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg shadow-blue-200"
+        >
+          Accept Case
+        </Button>
+      )}
+
+      {caseData.status === "in_progress" && (
+        <Button
+          onClick={handleCloseCase}
+          className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold"
+        >
+          Close Case
+        </Button>
+      )}
+
+    </CardContent>
+  </Card>
+)}
 
             {/* ADMIN ACTIONS */}
-            {role === "admin" && (
-              <Card className="border-slate-200 shadow-sm bg-white">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-slate-800">Administration</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-slate-500">Global Status</Label>
-                    <Select value={caseData.status} onValueChange={handleStatusChange}>
-                      <SelectTrigger className="bg-white rounded-xl border-slate-200">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="assigned">Assigned</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="closed">Closed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button
-                    onClick={handleGenerateReport}
-                    variant="outline"
-                    className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 font-medium rounded-xl flex items-center justify-center gap-2"
-                  >
-                    <Download size={16} />
-                    Export Case Report
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+            {/* ADMIN ACTIONS */}
+{role === "admin" && (
+  <Card className="border-slate-200 shadow-sm bg-white">
+    <CardHeader className="pb-3">
+      <CardTitle className="text-sm font-bold uppercase tracking-wider text-slate-800">
+        Administration
+      </CardTitle>
+    </CardHeader>
+
+    <CardContent className="space-y-4">
+
+      {/* ASSIGN LAWYER - only if case is open */}
+      {caseData.status === "open" && (
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-slate-500">
+            Assign Lawyer
+          </Label>
+
+          <Button
+            onClick={() => handleAssignLawyer(1)} 
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl"
+          >
+            Assign Lawyer
+          </Button>
+        </div>
+      )}
+
+      {/* GLOBAL STATUS */}
+      <div className="space-y-2">
+        <Label className="text-xs font-medium text-slate-500">
+          Global Status
+        </Label>
+
+        <Select value={caseData.status} onValueChange={handleStatusChange}>
+          <SelectTrigger className="bg-white rounded-xl border-slate-200">
+            <SelectValue />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="assigned">Assigned</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="closed">Closed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Button
+        onClick={handleGenerateReport}
+        variant="outline"
+        className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 font-medium rounded-xl flex items-center justify-center gap-2"
+      >
+        <Download size={16} />
+        Export Case Report
+      </Button>
+
+    </CardContent>
+  </Card>
+)}
 
           </div>
         </div>
