@@ -7,7 +7,7 @@ import {
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
+import { apiFetch } from "@/lib/api";
 import Header from "../components/Header";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -45,7 +45,7 @@ export default function CaseDetail() {
     const fetchCase = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`${API_BASE_URL}/api/cases/${id}`, {
+        const res = await apiFetch(`/api/cases/${id}`, {
   headers: { Authorization: `Bearer ${token}` },
 });
         const data = await res.json();
@@ -63,7 +63,7 @@ export default function CaseDetail() {
   try {
     const token = localStorage.getItem("token");
 
-    const res = await fetch(`${API_BASE_URL}/api/cases/${id}/status`, {
+    const res = await apiFetch(`/api/cases/${id}/status`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
