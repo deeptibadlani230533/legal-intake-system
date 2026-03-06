@@ -36,8 +36,8 @@ export default function Cases() {
 
       const endpoint =
         role === "lawyer"
-          ? "http://localhost:3000/api/lawyer/cases"
-          : "http://localhost:3000/api/cases";
+          ? `${import.meta.env.VITE_API_URL}/api/lawyer/cases`
+          : `${import.meta.env.VITE_API_URL}/api/cases`;
 
       const res = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
@@ -57,7 +57,7 @@ export default function Cases() {
   const fetchLawyers = async () => {
     try {
       const res = await fetch(
-        "http://localhost:3000/api/users/lawyers",
+        `${import.meta.env.VITE_API_URL}/api/users/lawyers`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -83,7 +83,7 @@ export default function Cases() {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/api/cases/${caseToAssign.id}/assign`,
+        `${import.meta.env.VITE_API_URL}/api/cases/${caseToAssign.id}/assign`,
         {
           method: "PATCH",
           headers: {
@@ -125,7 +125,7 @@ export default function Cases() {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/api/cases/${caseToArchive.id}`,
+        `${import.meta.env.VITE_API_URL}/api/cases/${caseToArchive.id}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
