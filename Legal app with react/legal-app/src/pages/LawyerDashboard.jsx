@@ -28,7 +28,7 @@ export default function LawyerDashboard() {
     const fetchLawyerCases = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:3000/api/lawyer/cases", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/lawyer/cases`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
