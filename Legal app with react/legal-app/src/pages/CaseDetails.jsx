@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  ArrowLeft, Calendar, User, Mail, Phone, MapPin, 
-  Briefcase, Scale, AlertCircle, Clock, Database, Shield, ShieldCheck, FileText
+import {
+  ArrowLeft, Calendar, User, Mail, Phone, MapPin,
+  Briefcase, Scale, AlertCircle, Clock, Database,
+  Shield, ShieldCheck, FileText
 } from "lucide-react";
+
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -15,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+
 import {
   Select,
   SelectContent,
@@ -27,7 +30,7 @@ import DocumentManager from "../components/DocumentManager";
 import ActivityTimeline from "../components/ActivityTimeline";
 
 const statusColors = {
-  open: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  assigned: "bg-amber-50 text-amber-700 border-amber-200",
   in_progress: "bg-blue-50 text-blue-700 border-blue-200",
   closed: "bg-slate-100 text-slate-600 border-slate-200",
 };
@@ -47,6 +50,7 @@ export default function CaseDetail() {
     setRole(userRole);
 
     const fetchCase = async () => {
+
       try {
 
         const token = localStorage.getItem("token");
@@ -65,11 +69,68 @@ export default function CaseDetail() {
         console.error(err);
         toast.error("Failed to fetch case details.");
       }
+
     };
 
     fetchCase();
 
   }, [id]);
+
+
+
+  const handleAcceptCase = async () => {
+
+    try {
+
+      const token = localStorage.getItem("token");
+
+      const res = await apiFetch(`/api/cases/${id}/accept`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) throw new Error();
+
+      setCaseData((prev) => ({ ...prev, status: "in_progress" }));
+      setActivityRefresh((prev) => prev + 1);
+
+      toast.success("Case accepted");
+
+    } catch {
+      toast.error("Failed to accept case");
+    }
+
+  };
+
+
+  const handleCloseCase = async () => {
+
+    try {
+
+      const token = localStorage.getItem("token");
+
+      const res = await apiFetch(`/api/cases/${id}/close`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) throw new Error();
+
+      setCaseData((prev) => ({ ...prev, status: "closed" }));
+      setActivityRefresh((prev) => prev + 1);
+
+      toast.success("Case closed");
+
+    } catch {
+      toast.error("Failed to close case");
+    }
+
+  };
+
 
   const handleStatusChange = async (newStatus) => {
 
@@ -81,95 +142,51 @@ export default function CaseDetail() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus })
       });
 
-      if (!res.ok) throw new Error("Update failed");
+      if (!res.ok) throw new Error();
 
       setCaseData((prev) => ({ ...prev, status: newStatus }));
       setActivityRefresh((prev) => prev + 1);
 
-      toast.success(`Status updated to ${newStatus}`);
+      toast.success("Status updated");
 
-    } catch (err) {
-      toast.error("Failed to update status.");
+    } catch {
+      toast.error("Failed to update status");
     }
+
   };
 
-  const handleAcceptCase = async () => {
-  try {
-    const res = await apiFetch(`/api/cases/${id}/accept`, {
-      method: "PATCH",
-    });
 
-    if (!res.ok) throw new Error("Accept failed");
-
-    setCaseData((prev) => ({ ...prev, status: "in_progress" }));
-    setActivityRefresh((prev) => prev + 1);
-
-    toast.success("Case accepted successfully");
-
-  } catch (err) {
-    toast.error("Failed to accept case");
-  }
-};
-
-const handleCloseCase = async () => {
-  try {
-    const res = await apiFetch(`/api/cases/${id}/close`, {
-      method: "PATCH",
-    });
-
-    if (!res.ok) throw new Error("Close failed");
-
-    setCaseData((prev) => ({ ...prev, status: "closed" }));
-    setActivityRefresh((prev) => prev + 1);
-
-    toast.success("Case closed");
-
-  } catch (err) {
-    toast.error("Failed to close case");
-  }
-};
 
   const handleGenerateReport = () => {
 
     if (!caseData) return;
 
-    try {
+    const doc = new jsPDF();
 
-      const doc = new jsPDF();
+    autoTable(doc, {
+      startY: 40,
+      head: [["Field", "Information"]],
+      body: [
+        ["Case Title", caseData.caseTitle],
+        ["Client", caseData.clientName],
+        ["Category", caseData.category],
+        ["Status", caseData.status],
+        ["Claim Amount", `₹${caseData.claimAmount}`]
+      ],
+    });
 
-      autoTable(doc, {
-        startY: 40,
-        head: [["Field", "Information"]],
-        body: [
-          ["Matter Title", caseData.caseTitle],
-          ["Client Name", caseData.clientName],
-          ["Email", caseData.clientEmail],
-          ["Phone", caseData.clientPhone],
-          ["Category", caseData.category],
-          ["Status", caseData.status],
-          ["Claim Amount", `₹${caseData.claimAmount}`],
-        ],
-      });
-
-      doc.save(`LegalPro_Report_${id}.pdf`);
-      toast.success("PDF generated");
-
-    } catch (err) {
-      toast.error("Error generating PDF");
-    }
+    doc.save(`LegalPro_Report_${id}.pdf`);
   };
 
+
   if (!caseData)
-    return (
-      <div className="p-8 text-slate-500 animate-pulse">
-        Loading case file...
-      </div>
-    );
+    return <div className="p-8">Loading case...</div>;
+
 
   return (
     <div className="flex-1 flex flex-col bg-slate-50/50 min-h-screen">
@@ -180,7 +197,6 @@ const handleCloseCase = async () => {
           variant="outline"
           size="sm"
           onClick={() => navigate("/cases")}
-          className="bg-white border-slate-200 shadow-sm"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Directory
@@ -188,27 +204,26 @@ const handleCloseCase = async () => {
 
       </Header>
 
+
       <main className="flex-1 p-6 lg:p-10">
 
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
 
+
           <div className="lg:col-span-2 space-y-8">
 
+
             <Card>
+
               <CardHeader>
 
                 <div className="flex justify-between">
 
                   <div>
-
-                    <CardTitle>
-                      {caseData.caseTitle}
-                    </CardTitle>
-
+                    <CardTitle>{caseData.caseTitle}</CardTitle>
                     <CardDescription>
                       Opened {new Date(caseData.createdAt).toLocaleDateString()}
                     </CardDescription>
-
                   </div>
 
                   <Badge className={statusColors[caseData.status]}>
@@ -220,57 +235,177 @@ const handleCloseCase = async () => {
               </CardHeader>
 
               <CardContent>
-                {caseData.description}
+
+                <Label className="text-xs uppercase text-slate-500">
+                  Case Narrative
+                </Label>
+
+                <p className="mt-2 text-sm text-slate-700">
+                  {caseData.description}
+                </p>
+
               </CardContent>
 
             </Card>
 
+
+
+            {/* CLIENT PROFILE */}
+
+            <Card>
+
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User size={18} />
+                  Client Profile
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="grid grid-cols-2 gap-6">
+
+                <div>
+                  <Label>Full Name</Label>
+                  <p>{caseData.clientName}</p>
+                </div>
+
+                <div>
+                  <Label>Email</Label>
+                  <p>{caseData.clientEmail}</p>
+                </div>
+
+                <div>
+                  <Label>Phone</Label>
+                  <p>{caseData.clientPhone}</p>
+                </div>
+
+                <div>
+                  <Label>Address</Label>
+                  <p>{caseData.clientAddress}</p>
+                </div>
+
+              </CardContent>
+
+            </Card>
+
+
+
+            {/* LEGAL DETAILS */}
+
+            <Card>
+
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Scale size={18} />
+                  Legal & Financial Details
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="grid grid-cols-2 gap-6">
+
+                <div>
+                  <Label>Category</Label>
+                  <p>{caseData.category}</p>
+                </div>
+
+                <div>
+                  <Label>Priority</Label>
+                  <p>{caseData.priority}</p>
+                </div>
+
+                <div>
+                  <Label>Incident Date</Label>
+                  <p>{caseData.incidentDate}</p>
+                </div>
+
+                <div>
+                  <Label>Opposing Party</Label>
+                  <p>{caseData.opponentName}</p>
+                </div>
+
+              </CardContent>
+
+            </Card>
+
+
+
+            {/* CLAIM AMOUNT */}
+
+            <Card className="bg-slate-900 text-white">
+
+              <CardContent className="p-6">
+
+                <p className="text-xs uppercase opacity-70">
+                  Estimated Claim Amount
+                </p>
+
+                <h2 className="text-3xl font-bold">
+                  ₹{Number(caseData.claimAmount).toLocaleString("en-IN")}
+                </h2>
+
+              </CardContent>
+
+            </Card>
+
+
+
             <ActivityTimeline caseId={id} refreshKey={activityRefresh} />
+
 
           </div>
 
+
+
           <div className="space-y-8">
+
 
             <DocumentManager caseId={id} role={role} />
 
-            {role === "lawyer" && caseData && (
-  <Card className="border-emerald-100 bg-emerald-50/40 shadow-sm rounded-2xl">
-    <CardHeader className="pb-3">
-      <CardTitle className="text-xs font-bold uppercase tracking-widest text-emerald-700 flex items-center gap-2">
-        <Shield className="w-3.5 h-3.5" />
-        Lawyer Actions
-      </CardTitle>
-    </CardHeader>
 
-    <CardContent className="space-y-4">
+            {role === "lawyer" && (
 
-      {/* ACCEPT CASE */}
-      {caseData.status !== "in_progress" && caseData.status !== "closed" && (
-        <Button
-          onClick={handleAcceptCase}
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
-        >
-          Accept Case
-        </Button>
-      )}
+              <Card>
 
-      {/* CLOSE CASE */}
-      {caseData.status === "in_progress" && (
-        <Button
-          onClick={handleCloseCase}
-          className="w-full bg-slate-800 hover:bg-slate-900 text-white rounded-xl"
-        >
-          Close Case
-        </Button>
-      )}
+                <CardHeader>
+                  <CardTitle>Lawyer Actions</CardTitle>
+                </CardHeader>
 
-    </CardContent>
-  </Card>
-)}
+                <CardContent className="space-y-4">
 
-            
+
+                  {caseData.status === "assigned" && (
+
+                    <Button
+                      onClick={handleAcceptCase}
+                      className="w-full bg-emerald-600 text-white"
+                    >
+                      Accept Case
+                    </Button>
+
+                  )}
+
+
+                  {caseData.status === "in_progress" && (
+
+                    <Button
+                      onClick={handleCloseCase}
+                      className="w-full bg-slate-800 text-white"
+                    >
+                      Close Case
+                    </Button>
+
+                  )}
+
+
+                </CardContent>
+
+              </Card>
+
+            )}
+
+
 
             {role === "admin" && (
+
               <Card>
 
                 <CardHeader>
@@ -283,17 +418,19 @@ const handleCloseCase = async () => {
                     value={caseData.status}
                     onValueChange={handleStatusChange}
                   >
+
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
 
                     <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="assigned">Assigned</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>
                       <SelectItem value="closed">Closed</SelectItem>
                     </SelectContent>
 
                   </Select>
+
 
                   <Button
                     onClick={handleGenerateReport}
@@ -305,7 +442,9 @@ const handleCloseCase = async () => {
                 </CardContent>
 
               </Card>
+
             )}
+
 
           </div>
 
@@ -315,4 +454,5 @@ const handleCloseCase = async () => {
 
     </div>
   );
+
 }
