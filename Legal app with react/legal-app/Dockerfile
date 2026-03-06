@@ -1,17 +1,4 @@
-FROM node:22-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-
-RUN npm install
-
-COPY . .
-
-RUN NODE_OPTIONS=--max-old-space-size=2048 npm run build
-
-RUN npm install -g serve
-
+FROM nginx:alpine
+COPY dist /usr/share/nginx/html
 EXPOSE 5173
-
-CMD serve -s dist -l 5173
+CMD ["nginx", "-g", "daemon off;"]
