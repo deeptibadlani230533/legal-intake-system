@@ -94,7 +94,7 @@ export default function DocumentManager({ caseId, role }) {
     setUploading(true);
 
     try {
-      const res = await fetch("${import.meta.env.VITE_API_URL}/api/documents", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/documents`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
