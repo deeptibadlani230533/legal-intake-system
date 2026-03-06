@@ -251,37 +251,42 @@ export default function CaseDetail() {
 
             <DocumentManager caseId={id} role={role} />
 
-            {role === "lawyer" && (
-              <Card>
+            {role === "lawyer" && caseData && (
+  <Card className="border-emerald-100 bg-emerald-50/40 shadow-sm rounded-2xl">
+    <CardHeader className="pb-3">
+      <CardTitle className="text-xs font-bold uppercase tracking-widest text-emerald-700 flex items-center gap-2">
+        <Shield className="w-3.5 h-3.5" />
+        Lawyer Actions
+      </CardTitle>
+    </CardHeader>
 
-                <CardHeader>
-                  <CardTitle>Lawyer Actions</CardTitle>
-                </CardHeader>
+    <CardContent className="space-y-4">
 
-                <CardContent className="space-y-4">
+      {/* ACCEPT CASE */}
+      {caseData.status !== "in_progress" && caseData.status !== "closed" && (
+        <Button
+          onClick={handleAcceptCase}
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
+        >
+          Accept Case
+        </Button>
+      )}
 
-                 {(caseData.status === "open" || caseData.status === "assigned") && (
-  <Button
-    onClick={handleAcceptCase}
-    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
-  >
-    Accept Case
-  </Button>
+      {/* CLOSE CASE */}
+      {caseData.status === "in_progress" && (
+        <Button
+          onClick={handleCloseCase}
+          className="w-full bg-slate-800 hover:bg-slate-900 text-white rounded-xl"
+        >
+          Close Case
+        </Button>
+      )}
+
+    </CardContent>
+  </Card>
 )}
 
-                  {caseData.status === "in_progress" && (
-                    <Button
-                      onClick={handleCloseCase}
-                      className="w-full bg-slate-800 text-white"
-                    >
-                      Close Case
-                    </Button>
-                  )}
-
-                </CardContent>
-
-              </Card>
-            )}
+            
 
             {role === "admin" && (
               <Card>
