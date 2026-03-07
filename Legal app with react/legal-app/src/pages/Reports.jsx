@@ -213,27 +213,38 @@ export default function Reports() {
             <CardHeader className="border-b border-slate-50 bg-slate-50/30">
               <CardTitle className="text-lg font-bold text-slate-800">Status Ratio</CardTitle>
             </CardHeader>
-            <CardContent className="h-[350px] flex flex-col justify-center">
-              <ResponsiveContainer width="100%" height="220px">
-                <PieChart>
-                  <Pie data={chartData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                    {chartData.map((entry, index) => <Cell key={index} fill={entry.color} stroke="none" />)}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="mt-4 space-y-2 px-6">
-                {chartData.map((d, i) => (
-                  <div key={i} className="flex justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full" style={{backgroundColor: d.color}} />
-                      <span className="text-slate-500">{d.name}</span>
-                    </div>
-                    <span className="font-bold text-slate-700">{d.value}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
+            <CardContent className="h-[350px] flex flex-col items-center justify-center">
+
+  <ResponsiveContainer width="100%" height={220}>
+    <PieChart>
+      <Pie
+        data={chartData}
+        innerRadius={60}
+        outerRadius={80}
+        paddingAngle={5}
+        dataKey="value"
+      >
+        {chartData.map((entry, index) => (
+          <Cell key={index} fill={entry.color} stroke="none" />
+        ))}
+      </Pie>
+      <Tooltip />
+    </PieChart>
+  </ResponsiveContainer>
+
+  <div className="mt-4 space-y-2 px-6 w-full">
+    {chartData.map((d, i) => (
+      <div key={i} className="flex justify-between text-xs">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
+          <span className="text-slate-500">{d.name}</span>
+        </div>
+        <span className="font-bold text-slate-700">{d.value}</span>
+      </div>
+    ))}
+  </div>
+
+</CardContent>
           </Card>
         </div>
       </main>
