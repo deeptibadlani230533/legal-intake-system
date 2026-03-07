@@ -1,34 +1,49 @@
-name: Legal Intake CI
+# trigger deployment
+name: Legal Intake CI/CD
 
 on:
-  push:
-    branches:
-      - main
+push:
+branches:
+- main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+build-and-deploy:
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+steps:
+  - name: Checkout Repository
+    uses: actions/checkout@v3
 
-      - name: Install Frontend Dependencies
-        run: |
-          cd "Legal app with react/legal-app"
-          npm install
+  - name: Setup Node
+    uses: actions/setup-node@v3
+    with:
+      node-version: 18
 
-      - name: Build Frontend
-        run: |
-          cd "Legal app with react/legal-app"
-          npm run build
+  - name: Install Frontend Dependencies
+    run: |
+      cd "Legal app with react/legal-app"
+      npm install
 
-      - name: Install Backend Dependencies
-        run: |
-          cd legal-intake-backend
-          npm install
+  - name: Build Frontend
+    run: |
+      cd "Legal app with react/legal-app"
+      npm run build
+
+  - name: Install Backend Dependencies
+    run: |
+      cd legal-intake-backend
+      npm install
+
+  - name: Deploy to EC2
+    uses: appleboy/ssh-action@master
+    with:
+      host: ${{ secrets.EC2_HOST }}
+      username: ubuntu
+      key: ${{ secrets.EC2_SSH_KEY }}
+      script: |
+        cd legal-intake-system
+        git pull origin main
+        docker compose down
+        docker compose up -d --build
+
