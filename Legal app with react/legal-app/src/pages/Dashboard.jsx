@@ -59,7 +59,7 @@ export default function Dashboard() {
                <Activity className="w-3.5 h-3.5 text-blue-600" />
                <span className="text-[10px] font-bold uppercase tracking-widest text-blue-700">Live System Status</span>
             </div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Legal Overview</h1>
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Legal Overview (CI/CD TEST)</h1>
             <p className="text-slate-500 font-medium">Monitoring case distributions and lawyer availability in real-time.</p>
           </div>
           <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md text-slate-700 px-5 py-2.5 rounded-2xl text-xs font-bold border border-slate-200/60 shadow-xl shadow-slate-200/40">
