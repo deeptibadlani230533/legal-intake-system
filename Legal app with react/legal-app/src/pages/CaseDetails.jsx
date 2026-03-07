@@ -133,28 +133,78 @@ export default function CaseDetail() {
   const handleGenerateReport = () => {
     if (!caseData) return;
     const doc = new jsPDF();
+    
+    // Header Styling
+    doc.setFontSize(20);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.text("LegalPro Case Summary", 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
+    doc.text(`Case ID: ${id}`, 14, 33);
+    
+    // Horizontal Line
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.line(14, 36, 196, 36);
+
     autoTable(doc, {
-      startY: 40,
-      head: [["Field", "Information"]],
+      startY: 42,
+      head: [["Attribute", "Details"]],
       body: [
         ["Case Title", caseData.caseTitle],
-        ["Client", caseData.clientName],
-        ["Category", caseData.category],
-        ["Status", caseData.status],
-        ["Claim Amount", `₹${caseData.claimAmount}`]
+        ["Client Name", caseData.clientName],
+        ["Contact", `${caseData.clientEmail} | ${caseData.clientPhone}`],
+        ["Legal Category", caseData.category],
+        ["Current Status", caseData.status.toUpperCase()],
+        ["Priority Level", caseData.priority.toUpperCase()],
+        ["Incident Date", caseData.incidentDate],
+        ["Claim Valuation", `INR ${Number(caseData.claimAmount).toLocaleString("en-IN")}`],
+        ["Opposing Party", caseData.opponentName],
       ],
+      // Professional Table Styling
+      headStyles: { 
+        fillColor: [30, 41, 59], // slate-800
+        textColor: [255, 255, 255], 
+        fontStyle: 'bold',
+        halign: 'left'
+      },
+      bodyStyles: { 
+        textColor: [51, 65, 85], // slate-700
+        fontSize: 10 
+      },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 50, fillColor: [248, 250, 252] }, // slate-50 background for labels
+      },
+      alternateRowStyles: {
+        fillColor: [255, 255, 255]
+      },
+      margin: { top: 40 },
+      theme: 'grid',
+      styles: {
+        cellPadding: 5,
+        lineColor: [226, 232, 240] // slate-200
+      }
     });
-    doc.save(`LegalPro_Report_${id}.pdf`);
-  };
 
-  if (!caseData) return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-50">
-      <div className="flex flex-col items-center gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="text-slate-500 font-medium tracking-tight">Accessing Case Files...</p>
-      </div>
-    </div>
-  );
+    // Narrative Section
+    const finalY = (doc).lastAutoTable.finalY || 150;
+    doc.setFontSize(12);
+    doc.setTextColor(30, 41, 59);
+    doc.text("Case Narrative & Description", 14, finalY + 15);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(71, 85, 105);
+    const splitDescription = doc.splitTextToSize(caseData.description, 180);
+    doc.text(splitDescription, 14, finalY + 22);
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text("This is an electronically generated legal document.", 14, 285);
+
+    doc.save(`LegalPro_Report_${caseData.caseTitle.replace(/\s+/g, '_')}.pdf`);
+  };
 
   return (
     <div className="flex-1 flex flex-col bg-[#F8FAFC] min-h-screen">
