@@ -56,84 +56,67 @@ export default function Reports() {
   }, []);
 
   const handleExportPDF = async () => {
-    const input = document.getElementById("reports-container");
-    if (!input) return;
+  const input = document.getElementById("reports-container");
+  if (!input) return;
 
-    try {
-      setIsExporting(true);
-      
-      const h2c = html2canvas.default || html2canvas;
+  try {
+    setIsExporting(true);
 
-      const canvas = await h2c(input, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: "#F8FAFC",
-        // FIX FOR OKLCH ERROR:
-        onclone: (clonedDoc) => {
-          const el = clonedDoc.getElementById("reports-container");
-          if (el) {
-            el.style.padding = "20px";
-            
-            // Scan all elements in the cloned document
-            const allElements = el.getElementsByTagName("*");
-            for (let i = 0; i < allElements.length; i++) {
-              const node = allElements[i];
-              const style = window.getComputedStyle(node);
-              
-              // If background or color uses 'oklch', force them to standard fallbacks
-              // html2canvas crashes specifically when it tries to parse 'oklch' strings
-              if (style.backgroundColor.includes("oklch")) {
-                node.style.backgroundColor = "#3b82f6"; // Safe Blue
-              }
-              if (style.color.includes("oklch")) {
-                node.style.color = "#1e293b"; // Safe Slate
-              }
-              if (style.borderColor.includes("oklch")) {
-                node.style.borderColor = "#e2e8f0"; // Safe Border
-              }
-            }
-          }
-        }
-      });
+    // Clone the node manually
+    const clone = input.cloneNode(true);
 
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      
-      const imgWidth = 210; 
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    // Remove problematic CSS variables and modern color functions
+    const all = clone.querySelectorAll("*");
 
-      // 1. WATERMARK
-      pdf.setTextColor(220, 220, 220); 
-      pdf.setFontSize(50);
-      pdf.text("LEGALPRO CONFIDENTIAL", 35, 150, { angle: 45 });
+    all.forEach(el => {
+      el.style.boxShadow = "none";
+      el.style.filter = "none";
+      el.style.backdropFilter = "none";
+    });
 
-      // 2. BRANDING HEADER
-      pdf.setFillColor(15, 23, 42); 
-      pdf.rect(0, 0, 210, 15, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(10);
-      pdf.text("LEGALPRO ANALYTICS REPORT", 10, 10);
-      pdf.text(`ISSUED: ${new Date().toLocaleDateString()}`, 165, 10);
+    const canvas = await html2canvas(clone, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      logging: false
+    });
 
-      // 3. ADD CONTENT
-      pdf.addImage(imgData, "PNG", 0, 15, imgWidth, imgHeight);
+    const imgData = canvas.toDataURL("image/png");
 
-      // 4. FOOTER
-      pdf.setFontSize(8);
-      pdf.setTextColor(100, 116, 139);
-      pdf.text("Privileged Information: Internal Legal Review Only.", 10, 290);
+    const pdf = new jsPDF("p", "mm", "a4");
 
-      pdf.save(`LegalPro_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    const imgWidth = 210;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    } catch (error) {
-      console.error("PDF Export failed:", error);
-      alert("PDF Export Error: Modern CSS colors (oklch) are blocking the generation. Please try again.");
-    } finally {
-      setIsExporting(false);
-    }
-  };
+    pdf.addImage(imgData, "PNG", 0, 20, imgWidth, imgHeight);
+
+    /* HEADER */
+
+    pdf.setFillColor(15, 23, 42);
+    pdf.rect(0, 0, 210, 15, "F");
+
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(10);
+
+    pdf.text("LEGALPRO ANALYTICS REPORT", 10, 10);
+    pdf.text(`ISSUED: ${new Date().toLocaleDateString()}`, 165, 10);
+
+    /* FOOTER */
+
+    pdf.setFontSize(8);
+    pdf.setTextColor(100, 116, 139);
+
+    pdf.text("Privileged Information: Internal Legal Review Only.", 10, 290);
+
+    pdf.save(`LegalPro_Report_${new Date().toISOString().split("T")[0]}.pdf`);
+
+  } catch (error) {
+    console.error("PDF Export failed:", error);
+    alert("PDF generation failed. Please try again.");
+  } finally {
+    setIsExporting(false);
+  }
+};
 
   return (
     <div className="flex-1 flex flex-col bg-[#F8FAFC] min-h-screen">
