@@ -56,29 +56,26 @@ export default function Reports() {
   }, []);
 
   const handleExportPDF = async () => {
+
   const input = document.getElementById("reports-container");
+  const charts = document.getElementById("charts-section");
+
   if (!input) return;
 
   try {
+
     setIsExporting(true);
 
-    // Clone the node manually
-    const clone = input.cloneNode(true);
+    // Hide charts temporarily
+    if (charts) charts.style.display = "none";
 
-    // Remove problematic CSS variables and modern color functions
-    const all = clone.querySelectorAll("*");
+    // wait for DOM update
+    await new Promise(r => setTimeout(r, 300));
 
-    all.forEach(el => {
-      el.style.boxShadow = "none";
-      el.style.filter = "none";
-      el.style.backdropFilter = "none";
-    });
-
-    const canvas = await html2canvas(clone, {
+    const canvas = await html2canvas(input, {
       scale: 2,
       backgroundColor: "#ffffff",
-      useCORS: true,
-      logging: false
+      useCORS: true
     });
 
     const imgData = canvas.toDataURL("image/png");
@@ -88,34 +85,37 @@ export default function Reports() {
     const imgWidth = 210;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    pdf.addImage(imgData, "PNG", 0, 20, imgWidth, imgHeight);
-
-    /* HEADER */
-
     pdf.setFillColor(15, 23, 42);
     pdf.rect(0, 0, 210, 15, "F");
 
-    pdf.setTextColor(255, 255, 255);
+    pdf.setTextColor(255,255,255);
     pdf.setFontSize(10);
 
     pdf.text("LEGALPRO ANALYTICS REPORT", 10, 10);
     pdf.text(`ISSUED: ${new Date().toLocaleDateString()}`, 165, 10);
 
-    /* FOOTER */
+    pdf.addImage(imgData, "PNG", 0, 20, imgWidth, imgHeight);
 
     pdf.setFontSize(8);
-    pdf.setTextColor(100, 116, 139);
-
+    pdf.setTextColor(100,116,139);
     pdf.text("Privileged Information: Internal Legal Review Only.", 10, 290);
 
     pdf.save(`LegalPro_Report_${new Date().toISOString().split("T")[0]}.pdf`);
 
-  } catch (error) {
-    console.error("PDF Export failed:", error);
-    alert("PDF generation failed. Please try again.");
-  } finally {
-    setIsExporting(false);
   }
+  catch(err){
+
+    console.error(err);
+    alert("PDF generation failed.");
+
+  }
+  finally{
+
+    if (charts) charts.style.display = "grid"; // restore charts
+    setIsExporting(false);
+
+  }
+
 };
 
   return (
