@@ -1,13 +1,13 @@
 name: Legal Intake CI/CD
 
-on:
-push:
-branches:
-- main
+"on":
+  push:
+    branches:
+      - main
 
 jobs:
-build-and-deploy:
-runs-on: ubuntu-latest
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
 steps:
   - name: Checkout Repository
@@ -16,7 +16,7 @@ steps:
   - name: Setup Node
     uses: actions/setup-node@v3
     with:
-      node-version: 18
+      node-version: "18"
 
   - name: Install Frontend Dependencies
     run: |
