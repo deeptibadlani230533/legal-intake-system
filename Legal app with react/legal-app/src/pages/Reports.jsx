@@ -11,38 +11,83 @@ import { Button } from "@/components/ui/button";
 import jsPDF from "jspdf";
 
 export default function Reports() {
-  const [stats, setStats] = useState(null);
-  const [chartData, setChartData] = useState([]);
-  const [error, setError] = useState("");
-  const [isExporting, setIsExporting] = useState(false);
+const [stats, setStats] = useState(null);
+const [chartData, setChartData] = useState([]);
+const [cases, setCases] = useState([]);
+const [filterRange, setFilterRange] = useState("all");
+const [error, setError] = useState("");
+const [isExporting, setIsExporting] = useState(false);
 
-  useEffect(() => {
-    const fetchCases = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/cases`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error("Failed to load reports.");
+ useEffect(() => {
 
-        const total = data.length;
-        const open = data.filter(c => c.status === "open").length;
-        const closed = data.filter(c => c.status === "closed").length;
-        const inProgress = data.filter(c => c.status === "in_progress").length;
+  const fetchCases = async () => {
 
-        setStats({ total, open, closed, inProgress });
-        setChartData([
-          { name: "Open", value: open, color: "#10b981" },
-          { name: "In Progress", value: inProgress, color: "#3b82f6" },
-          { name: "Closed", value: closed, color: "#64748b" }
-        ]);
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-    fetchCases();
-  }, []);
+    try {
+
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/cases`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error("Failed to load reports.");
+
+      setCases(data);
+      processCases(data, filterRange);
+
+    } catch (err) {
+      setError(err.message);
+    }
+
+  };
+
+  fetchCases();
+
+}, []);
+
+const processCases = (data, range) => {
+
+  let filtered = [...data];
+
+  if (range !== "all") {
+
+    const now = new Date();
+    const days = Number(range);
+
+    filtered = data.filter(c => {
+
+      if (!c.createdAt) return true;
+
+      const created = new Date(c.createdAt);
+      const diff = (now - created) / (1000 * 60 * 60 * 24);
+
+      return diff <= days;
+
+    });
+
+  }
+
+  const total = filtered.length;
+  const open = filtered.filter(c => c.status === "open").length;
+  const closed = filtered.filter(c => c.status === "closed").length;
+  const inProgress = filtered.filter(c => c.status === "in_progress").length;
+
+  setStats({ total, open, closed, inProgress });
+
+  setChartData([
+    { name: "Open", value: open, color: "#10b981" },
+    { name: "In Progress", value: inProgress, color: "#3b82f6" },
+    { name: "Closed", value: closed, color: "#64748b" }
+  ]);
+
+};
+
+const handleFilterChange = (range) => {
+  setFilterRange(range);
+  processCases(cases, range);
+};
 
   const handleExportPDF = () => {
     if (!stats) return;
@@ -157,9 +202,16 @@ export default function Reports() {
           >
             {isExporting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin text-blue-600" /> Generating...</> : <><Download className="w-4 h-4 mr-2 text-blue-600" /> Export PDF</>}
           </Button>
-          <Button size="sm" className="bg-slate-900 hover:bg-slate-800 rounded-xl shadow-md">
-            <Filter className="w-4 h-4 mr-2" /> Filter Range
-          </Button>
+          <select
+  className="text-sm border border-slate-300 rounded-xl px-3 py-2"
+  value={filterRange}
+  onChange={(e) => handleFilterChange(e.target.value)}
+>
+  <option value="all">All Time</option>
+  <option value="7">Last 7 Days</option>
+  <option value="30">Last 30 Days</option>
+  <option value="90">Last 90 Days</option>
+</select>
         </div>
       </Header>
 
@@ -177,6 +229,16 @@ export default function Reports() {
             <p className="text-slate-300 max-w-md text-sm leading-relaxed">Detailed analysis of firm metrics and operational efficiency.</p>
           </div>
         </div>
+
+        <div className="text-xs text-slate-500 font-medium">
+  Showing data for: 
+  <span className="ml-1 text-slate-800 font-semibold">
+    {filterRange === "all" && "All Time"}
+    {filterRange === "7" && "Last 7 Days"}
+    {filterRange === "30" && "Last 30 Days"}
+    {filterRange === "90" && "Last 90 Days"}
+  </span>
+</div>
 
         {/* METRICS GRID */}
         {stats && (
