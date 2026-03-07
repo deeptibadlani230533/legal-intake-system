@@ -133,7 +133,7 @@ export default function Reports() {
     // 5. WATERMARK & FOOTER
     doc.setTextColor(230, 230, 230);
     doc.setFontSize(50);
-    doc.text("CONFIDENTIAL", 40, 230, { angle: 45 });
+    
 
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184);
