@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import * as html2canvas from "html2canvas";
 
 export default function Reports() {
   const [stats, setStats] = useState(null);
@@ -55,16 +55,44 @@ export default function Reports() {
   }, []);
 
   const handleExportPDF = async () => {
-    const input = document.getElementById("reports-container");
-    const canvas = await html2canvas(input, { scale: 2 });
+  const input = document.getElementById("reports-container");
+  
+  // 1. Check if the element exists to prevent "null" errors
+  if (!input) {
+    console.error("Target element #reports-container not found.");
+    return;
+  }
+
+  try {
+    // 2. Added logging: true to help us see exactly where it stops in the console
+    const canvas = await html2canvas(input, {
+      scale: 2,
+      useCORS: true, 
+      allowTaint: true,
+      logging: true, 
+      backgroundColor: "#F8FAFC", // Match your new background
+      // This helps with SVG/Recharts rendering issues
+      onclone: (clonedDoc) => {
+        const el = clonedDoc.getElementById("reports-container");
+        el.style.padding = "20px"; // Ensure margins look good in PDF
+      }
+    });
+
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
-    const imgWidth = 210;
+    
+    const imgWidth = 210; 
+    const pageHeight = 297;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
     pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
     pdf.save("legalpro-analytics-report.pdf");
-  };
 
+  } catch (error) {
+    console.error("PDF Export failed:", error);
+    alert("Could not generate PDF. Check console for details.");
+  }
+};
   return (
     <div className="flex-1 flex flex-col bg-[#F8FAFC] min-h-screen">
       <Header title="Analytics & Intelligence">
