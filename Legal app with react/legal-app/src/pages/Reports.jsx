@@ -55,63 +55,93 @@ export default function Reports() {
     fetchCases();
   }, []);
 
-  const handleExportPDF = async () => {
+ const handleExportPDF = async () => {
 
   const input = document.getElementById("reports-container");
-  const charts = document.getElementById("charts-section");
-
   if (!input) return;
 
   try {
 
     setIsExporting(true);
 
-    // Hide charts temporarily
-    if (charts) charts.style.display = "none";
-
-    // wait for DOM update
     await new Promise(r => setTimeout(r, 300));
 
     const canvas = await html2canvas(input, {
+
       scale: 2,
       backgroundColor: "#ffffff",
-      useCORS: true
+      useCORS: true,
+
+      onclone: (doc) => {
+
+        const cloned = doc.getElementById("reports-container");
+
+        if (!cloned) return;
+
+        const all = cloned.querySelectorAll("*");
+
+        all.forEach(el => {
+
+          const style = doc.defaultView.getComputedStyle(el);
+
+          const bg = style.backgroundColor;
+          const color = style.color;
+          const border = style.borderColor;
+
+          if (bg && bg.includes("oklch")) {
+            el.style.backgroundColor = "#ffffff";
+          }
+
+          if (color && color.includes("oklch")) {
+            el.style.color = "#111827";
+          }
+
+          if (border && border.includes("oklch")) {
+            el.style.borderColor = "#e5e7eb";
+          }
+
+        });
+
+      }
+
     });
 
     const imgData = canvas.toDataURL("image/png");
 
-    const pdf = new jsPDF("p", "mm", "a4");
+    const pdf = new jsPDF("p","mm","a4");
 
     const imgWidth = 210;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    pdf.setFillColor(15, 23, 42);
-    pdf.rect(0, 0, 210, 15, "F");
+    pdf.addImage(imgData,"PNG",0,20,imgWidth,imgHeight);
+
+    pdf.setFillColor(15,23,42);
+    pdf.rect(0,0,210,15,"F");
 
     pdf.setTextColor(255,255,255);
     pdf.setFontSize(10);
 
-    pdf.text("LEGALPRO ANALYTICS REPORT", 10, 10);
-    pdf.text(`ISSUED: ${new Date().toLocaleDateString()}`, 165, 10);
-
-    pdf.addImage(imgData, "PNG", 0, 20, imgWidth, imgHeight);
+    pdf.text("LEGALPRO ANALYTICS REPORT",10,10);
+    pdf.text(`ISSUED: ${new Date().toLocaleDateString()}`,165,10);
 
     pdf.setFontSize(8);
     pdf.setTextColor(100,116,139);
-    pdf.text("Privileged Information: Internal Legal Review Only.", 10, 290);
+
+    pdf.text("Privileged Information: Internal Legal Review Only.",10,290);
 
     pdf.save(`LegalPro_Report_${new Date().toISOString().split("T")[0]}.pdf`);
 
   }
+
   catch(err){
 
     console.error(err);
     alert("PDF generation failed.");
 
   }
+
   finally{
 
-    if (charts) charts.style.display = "grid"; // restore charts
     setIsExporting(false);
 
   }
