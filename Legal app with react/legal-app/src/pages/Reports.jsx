@@ -12,18 +12,19 @@ import {
   Cell
 } from "recharts";
 
-import { Download, FileText, Filter, TrendingUp, Briefcase, Activity, CheckCircle2 } from "lucide-react";
+import { Download, FileText, Filter, TrendingUp, Briefcase, Activity, CheckCircle2, Loader2 } from "lucide-react";
 import Header from "../components/Header.jsx";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 import jsPDF from "jspdf";
-import * as html2canvas from "html2canvas";
+import html2canvas from "html2canvas";
 
 export default function Reports() {
   const [stats, setStats] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [error, setError] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const fetchCases = async () => {
@@ -54,45 +55,80 @@ export default function Reports() {
     fetchCases();
   }, []);
 
+  /* ---------------- EXPORT PDF WITH BRANDING & WATERMARK ---------------- */
   const handleExportPDF = async () => {
-  const input = document.getElementById("reports-container");
-  
-  // 1. Check if the element exists to prevent "null" errors
-  if (!input) {
-    console.error("Target element #reports-container not found.");
-    return;
-  }
+    const input = document.getElementById("reports-container");
+    if (!input) return;
 
-  try {
-    // 2. Added logging: true to help us see exactly where it stops in the console
-    const canvas = await html2canvas(input, {
-      scale: 2,
-      useCORS: true, 
-      allowTaint: true,
-      logging: true, 
-      backgroundColor: "#F8FAFC", // Match your new background
-      // This helps with SVG/Recharts rendering issues
-      onclone: (clonedDoc) => {
-        const el = clonedDoc.getElementById("reports-container");
-        el.style.padding = "20px"; // Ensure margins look good in PDF
+    try {
+      setIsExporting(true);
+      
+      // Resolve html2canvas for production builds (Fixes TypeError: pY is not a function)
+      const h2c = html2canvas.default || html2canvas;
+
+      const canvas = await h2c(input, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: "#F8FAFC",
+        onclone: (clonedDoc) => {
+          const el = clonedDoc.getElementById("reports-container");
+          if (el) el.style.padding = "20px";
+        }
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      
+      const imgWidth = 210; 
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // 1. ADD WATERMARK (Diagonal Background)
+      pdf.setTextColor(220, 220, 220); 
+      pdf.setFontSize(60);
+      pdf.setFont("helvetica", "bold");
+      pdf.saveGraphicsState();
+      // Use setGState for opacity if your jsPDF version supports it, otherwise use light gray
+      pdf.text("CONFIDENTIAL", 40, 150, { angle: 45 });
+      pdf.restoreGraphicsState();
+
+      // 2. ADD TOP BRANDING BAR
+      pdf.setFillColor(15, 23, 42); // Slate-900
+      pdf.rect(0, 0, 210, 15, "F");
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(10);
+      pdf.text("LEGALPRO ANALYTICS ENGINE", 10, 10);
+      pdf.text(`ISSUED: ${new Date().toLocaleDateString()}`, 165, 10);
+
+      // 3. ADD MAIN CONTENT (Starts after branding bar)
+      pdf.addImage(imgData, "PNG", 0, 15, imgWidth, imgHeight);
+
+      // 4. ADD FOOTER & PAGE NUMBERS
+      const pageCount = pdf.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 116, 139); // Slate-500
+        pdf.text(
+          "Privileged Information: Intended for Internal Legal Review Only.",
+          10,
+          290
+        );
+        pdf.text(`Page ${i} of ${pageCount}`, 185, 290);
       }
-    });
 
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    
-    const imgWidth = 210; 
-    const pageHeight = 297;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.save(`LegalPro_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 
-    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-    pdf.save("legalpro-analytics-report.pdf");
+    } catch (error) {
+      console.error("PDF Export failed:", error);
+      alert("Failed to generate PDF. See console for details.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
-  } catch (error) {
-    console.error("PDF Export failed:", error);
-    alert("Could not generate PDF. Check console for details.");
-  }
-};
   return (
     <div className="flex-1 flex flex-col bg-[#F8FAFC] min-h-screen">
       <Header title="Analytics & Intelligence">
@@ -100,10 +136,21 @@ export default function Reports() {
           <Button
             variant="outline"
             size="sm"
-            className="bg-white border-slate-200 shadow-sm hover:bg-slate-50 rounded-xl"
+            disabled={isExporting}
+            className="bg-white border-slate-200 shadow-sm hover:bg-slate-50 rounded-xl min-w-[130px]"
             onClick={handleExportPDF}
           >
-            <Download className="w-4 h-4 mr-2 text-blue-600" /> Export PDF
+            {isExporting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin text-blue-600" /> 
+                Exporting...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2 text-blue-600" /> 
+                Export PDF
+              </>
+            )}
           </Button>
           <Button size="sm" className="bg-slate-900 hover:bg-slate-800 rounded-xl shadow-md">
             <Filter className="w-4 h-4 mr-2" /> Filter Range
@@ -200,7 +247,8 @@ export default function Reports() {
                     cursor={{fill: '#f8fafc'}}
                     contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
                   />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={40} />
+                  {/* Animation disabled during export to ensure clean capture */}
+                  <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={40} isAnimationActive={!isExporting} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -220,6 +268,7 @@ export default function Reports() {
                     outerRadius={100}
                     paddingAngle={8}
                     dataKey="value"
+                    isAnimationActive={!isExporting}
                   >
                     {chartData.map((entry, index) => (
                       <Cell key={index} fill={entry.color} stroke="none" />
@@ -230,7 +279,6 @@ export default function Reports() {
                   />
                 </PieChart>
               </ResponsiveContainer>
-              {/* Legend replacement for cleaner UI */}
               <div className="w-full space-y-2 mt-4">
                  {chartData.map((entry, i) => (
                    <div key={i} className="flex items-center justify-between text-xs px-4">
