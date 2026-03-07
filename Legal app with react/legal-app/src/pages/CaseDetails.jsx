@@ -131,80 +131,131 @@ export default function CaseDetail() {
   };
 
   const handleGenerateReport = () => {
-    if (!caseData) return;
-    const doc = new jsPDF();
-    
-    // Header Styling
-    doc.setFontSize(20);
-    doc.setTextColor(15, 23, 42); // slate-900
-    doc.text("LegalPro Case Summary", 14, 22);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139); // slate-500
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
-    doc.text(`Case ID: ${id}`, 14, 33);
-    
-    // Horizontal Line
-    doc.setDrawColor(226, 232, 240); // slate-200
-    doc.line(14, 36, 196, 36);
+  if (!caseData) return;
 
-    autoTable(doc, {
-      startY: 42,
-      head: [["Attribute", "Details"]],
-      body: [
-        ["Case Title", caseData.caseTitle],
-        ["Client Name", caseData.clientName],
-        ["Contact", `${caseData.clientEmail} | ${caseData.clientPhone}`],
-        ["Legal Category", caseData.category],
-        ["Current Status", caseData.status.toUpperCase()],
-        ["Priority Level", caseData.priority.toUpperCase()],
-        ["Incident Date", caseData.incidentDate],
-        ["Claim Valuation", `INR ${Number(caseData.claimAmount).toLocaleString("en-IN")}`],
-        ["Opposing Party", caseData.opponentName],
-      ],
-      // Professional Table Styling
-      headStyles: { 
-        fillColor: [30, 41, 59], // slate-800
-        textColor: [255, 255, 255], 
-        fontStyle: 'bold',
-        halign: 'left'
-      },
-      bodyStyles: { 
-        textColor: [51, 65, 85], // slate-700
-        fontSize: 10 
-      },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 50, fillColor: [248, 250, 252] }, // slate-50 background for labels
-      },
-      alternateRowStyles: {
-        fillColor: [255, 255, 255]
-      },
-      margin: { top: 40 },
-      theme: 'grid',
-      styles: {
-        cellPadding: 5,
-        lineColor: [226, 232, 240] // slate-200
-      }
-    });
+  const doc = new jsPDF();
 
-    // Narrative Section
-    const finalY = (doc).lastAutoTable.finalY || 150;
-    doc.setFontSize(12);
-    doc.setTextColor(30, 41, 59);
-    doc.text("Case Narrative & Description", 14, finalY + 15);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(71, 85, 105);
-    const splitDescription = doc.splitTextToSize(caseData.description, 180);
-    doc.text(splitDescription, 14, finalY + 22);
+  const pageWidth = doc.internal.pageSize.width;
+  const pageHeight = doc.internal.pageSize.height;
 
-    // Footer
+  /* ---------------- HEADER ---------------- */
+
+  doc.setFillColor(30, 41, 59);
+  doc.rect(0, 0, pageWidth, 30, "F");
+
+  doc.setFontSize(18);
+  doc.setTextColor(255, 255, 255);
+  doc.text("LegalPro Case Report", 14, 18);
+
+  doc.setFontSize(10);
+  doc.text(`Case ID: ${id}`, pageWidth - 50, 14);
+  doc.text(
+    `Generated: ${new Date().toLocaleDateString()}`,
+    pageWidth - 50,
+    20
+  );
+
+  /* ---------------- CASE TITLE ---------------- */
+
+  doc.setTextColor(30, 41, 59);
+  doc.setFontSize(16);
+  doc.text(caseData.caseTitle, 14, 45);
+
+  /* ---------------- DESCRIPTION SECTION ---------------- */
+
+  doc.setFontSize(12);
+  doc.setTextColor(59, 130, 246);
+  doc.text("Case Description", 14, 55);
+
+  doc.setDrawColor(200);
+  doc.line(14, 58, pageWidth - 14, 58);
+
+  doc.setFontSize(10);
+  doc.setTextColor(70);
+
+  const description = doc.splitTextToSize(caseData.description || "", 180);
+
+  doc.text(description, 14, 65);
+
+  /* ---------------- TABLE START ---------------- */
+
+  const tableStartY = 65 + description.length * 5 + 10;
+
+  autoTable(doc, {
+    startY: tableStartY,
+
+    head: [["Field", "Details"]],
+
+    body: [
+      ["Client Name", caseData.clientName],
+      ["Client Email", caseData.clientEmail],
+      ["Client Phone", caseData.clientPhone],
+      ["Client Address", caseData.clientAddress],
+      ["Legal Category", caseData.category],
+      ["Case Status", caseData.status.toUpperCase()],
+      ["Priority Level", caseData.priority.toUpperCase()],
+      ["Incident Date", caseData.incidentDate],
+      ["Claim Amount", `₹${Number(caseData.claimAmount).toLocaleString("en-IN")}`],
+      ["Opposing Party", caseData.opponentName],
+    ],
+
+    theme: "grid",
+
+    headStyles: {
+      fillColor: [30, 41, 59],
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+      halign: "left",
+    },
+
+    bodyStyles: {
+      textColor: [51, 65, 85],
+      fontSize: 10,
+    },
+
+    columnStyles: {
+      0: {
+        fontStyle: "bold",
+        fillColor: [248, 250, 252],
+        cellWidth: 60,
+      },
+    },
+
+    styles: {
+      cellPadding: 5,
+      lineColor: [226, 232, 240],
+    },
+  });
+
+  /* ---------------- FOOTER ---------------- */
+
+  const pageCount = doc.internal.getNumberOfPages();
+
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+
     doc.setFontSize(8);
-    doc.setTextColor(148, 163, 184);
-    doc.text("This is an electronically generated legal document.", 14, 285);
+    doc.setTextColor(150);
 
-    doc.save(`LegalPro_Report_${caseData.caseTitle.replace(/\s+/g, '_')}.pdf`);
-  };
+    doc.text(
+      "Generated by LegalPro Case Management System",
+      14,
+      pageHeight - 10
+    );
+
+    doc.text(
+      `Page ${i} of ${pageCount}`,
+      pageWidth - 30,
+      pageHeight - 10
+    );
+  }
+
+  /* ---------------- SAVE ---------------- */
+
+  doc.save(
+    `LegalPro_Report_${caseData.caseTitle.replace(/\s+/g, "_")}.pdf`
+  );
+};
 
   if (!caseData) {
   return (
