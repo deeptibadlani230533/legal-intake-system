@@ -206,6 +206,14 @@ export default function CaseDetail() {
     doc.save(`LegalPro_Report_${caseData.caseTitle.replace(/\s+/g, '_')}.pdf`);
   };
 
+  if (!caseData) {
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <p className="text-slate-500">Loading case details...</p>
+    </div>
+  );
+}
+
   return (
     <div className="flex-1 flex flex-col bg-[#F8FAFC] min-h-screen">
       <Header title="Case Management">
