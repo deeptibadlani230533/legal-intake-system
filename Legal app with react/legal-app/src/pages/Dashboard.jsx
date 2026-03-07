@@ -113,7 +113,7 @@ export default function Dashboard() {
                   onClick={() => navigate("/reports")} 
                   className="bg-blue-600 text-white hover:bg-blue-700 h-12 px-8 rounded-xl shadow-lg shadow-blue-600/20 font-bold transition-all active:scale-95"
                 >
-                  <BarChart3 className="w-4 h-4 mr-2" /> View Reports
+                  <BarChart3 className="w-4 h-4 mr-2" /> View Case Reports
                 </Button>
 
                 {role === "admin" && (
