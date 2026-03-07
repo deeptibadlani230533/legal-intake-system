@@ -62,8 +62,6 @@ export default function Reports() {
 
     try {
       setIsExporting(true);
-      
-      // Resolve html2canvas for production builds (Fixes TypeError: pY is not a function)
       const h2c = html2canvas.default || html2canvas;
 
       const canvas = await h2c(input, {
@@ -72,9 +70,24 @@ export default function Reports() {
         allowTaint: true,
         logging: false,
         backgroundColor: "#F8FAFC",
+        // THIS IS THE FIX FOR THE OKLCH ERROR
         onclone: (clonedDoc) => {
           const el = clonedDoc.getElementById("reports-container");
-          if (el) el.style.padding = "20px";
+          if (el) {
+            el.style.padding = "20px";
+            // Find every element that might have an oklch color and force it to a safe hex/rgb
+            const allElements = el.getElementsByTagName("*");
+            for (let i = 0; i < allElements.length; i++) {
+              const style = window.getComputedStyle(allElements[i]);
+              // If the library chokes on specific elements, we force them to standard colors here
+              if (style.backgroundColor.includes("oklch")) {
+                 allElements[i].style.backgroundColor = "#3b82f6"; // Fallback blue
+              }
+              if (style.color.includes("oklch")) {
+                 allElements[i].style.color = "#1e293b"; // Fallback slate
+              }
+            }
+          }
         }
       });
 
@@ -84,46 +97,30 @@ export default function Reports() {
       const imgWidth = 210; 
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      // 1. ADD WATERMARK (Diagonal Background)
-      pdf.setTextColor(220, 220, 220); 
-      pdf.setFontSize(60);
-      pdf.setFont("helvetica", "bold");
-      pdf.saveGraphicsState();
-      // Use setGState for opacity if your jsPDF version supports it, otherwise use light gray
-      pdf.text("CONFIDENTIAL", 40, 150, { angle: 45 });
-      pdf.restoreGraphicsState();
-
-      // 2. ADD TOP BRANDING BAR
-      pdf.setFillColor(15, 23, 42); // Slate-900
+      // Branded Header Bar
+      pdf.setFillColor(15, 23, 42); 
       pdf.rect(0, 0, 210, 15, "F");
-      
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(10);
       pdf.text("LEGALPRO ANALYTICS ENGINE", 10, 10);
       pdf.text(`ISSUED: ${new Date().toLocaleDateString()}`, 165, 10);
 
-      // 3. ADD MAIN CONTENT (Starts after branding bar)
+      // Main Content
       pdf.addImage(imgData, "PNG", 0, 15, imgWidth, imgHeight);
 
-      // 4. ADD FOOTER & PAGE NUMBERS
-      const pageCount = pdf.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(8);
-        pdf.setTextColor(100, 116, 139); // Slate-500
-        pdf.text(
-          "Privileged Information: Intended for Internal Legal Review Only.",
-          10,
-          290
-        );
-        pdf.text(`Page ${i} of ${pageCount}`, 185, 290);
-      }
+      // Footer
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text("Privileged Information: Internal Legal Review Only.", 10, 290);
 
       pdf.save(`LegalPro_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 
     } catch (error) {
       console.error("PDF Export failed:", error);
-      alert("Failed to generate PDF. See console for details.");
+      // If OKLCH still fails, alert the user with a specific message
+      if (error.message.includes("oklch")) {
+        alert("Design compatibility error: Modern CSS colors are blocking the PDF. Please try again.");
+      }
     } finally {
       setIsExporting(false);
     }
