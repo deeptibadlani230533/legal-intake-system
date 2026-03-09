@@ -1,6 +1,6 @@
 
 const { User } = require("../models");
-
+const { getUserActivity } = require("../services/audit.service");
 exports.getAllUsers = async (req, reply) => {
   try {
     const users = await User.findAll({
@@ -44,5 +44,19 @@ exports.deleteUser = async (request, reply) => {
   } catch (error) {
     console.error("Delete user error:", error);
     return reply.code(500).send({ message: "Failed to delete user" });
+  }
+};
+
+exports.getUserActivity = async (request, reply) => {
+  try {
+    const { id } = request.params;
+
+    const activity = await getUserActivity(id);
+
+    return reply.send(activity);
+
+  } catch (error) {
+    console.error("Error fetching user activity:", error);
+    return reply.code(500).send({ message: "Failed to fetch user activity" });
   }
 };

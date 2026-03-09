@@ -29,6 +29,14 @@ async function userRoutes(app) {
     userController.deleteUser
   );
 
+  app.get(
+  "/users/:id/activity",
+  {
+    preHandler: [authenticate, allowRoles("admin")],
+  },
+  userController.getUserActivity
+);
+
 }
 
 
