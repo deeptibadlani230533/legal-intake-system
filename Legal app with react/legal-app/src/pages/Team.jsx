@@ -95,26 +95,35 @@ export default function Team() {
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-6 gap-4">
-          <input
-            type="text"
-            placeholder="Search by name or email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm w-64"
-          />
+        <div className="flex items-center justify-between mb-6">
+  <div className="flex items-center gap-3">
 
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm"
-          >
-            <option value="all">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="lawyer">Lawyer</option>
-            <option value="client">Client</option>
-          </select>
-        </div>
+    {/* Search */}
+    <div className="relative">
+      <input
+        type="text"
+        placeholder="Search members..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="pl-9 pr-3 py-2 border rounded-lg text-sm w-64 bg-white"
+      />
+      <User className="absolute left-2 top-2.5 w-4 h-4 text-slate-400" />
+    </div>
+
+    {/* Role Filter */}
+    <select
+      value={roleFilter}
+      onChange={(e) => setRoleFilter(e.target.value)}
+      className="border rounded-lg px-3 py-2 text-sm bg-white"
+    >
+      <option value="all">All Roles</option>
+      <option value="admin">Admin</option>
+      <option value="lawyer">Lawyer</option>
+      <option value="client">Client</option>
+    </select>
+
+  </div>
+</div>
 
         <Card className="border-slate-200/60 shadow-sm overflow-hidden bg-white rounded-xl">
           <Table>
