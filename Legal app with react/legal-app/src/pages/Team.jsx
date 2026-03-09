@@ -235,10 +235,7 @@ export default function Team() {
                           <DropdownMenuLabel className="px-2 py-1.5 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
                             Account Actions
                           </DropdownMenuLabel>
-                          <DropdownMenuItem className="cursor-pointer rounded-lg py-2 focus:bg-slate-50">
-                            <Activity className="w-4 h-4 mr-2 text-slate-400" />
-                            <span className="text-sm font-medium">Activity Log</span>
-                          </DropdownMenuItem>
+                          
                           <div className="my-1 border-t border-slate-100" />
                           <DropdownMenuItem
                             disabled={user.role === "admin"}
