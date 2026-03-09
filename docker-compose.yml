@@ -19,6 +19,7 @@ services:
     env_file:
       - ./legal-intake-backend/.env
     environment:
+      NODE_ENV: production
       DB_HOST: db
       DB_USER: postgres
       DB_PASS: ${DB_PASS}
