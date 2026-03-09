@@ -20,7 +20,18 @@ async function userRoutes(app) {
   userController.getLawyers
 );
 
+// DELETE USER
+  app.delete(
+    "/users/:id",
+    {
+      preHandler: [authenticate, allowRoles("admin")],
+    },
+    userController.deleteUser
+  );
+
 }
+
+
 
 
 module.exports = userRoutes;

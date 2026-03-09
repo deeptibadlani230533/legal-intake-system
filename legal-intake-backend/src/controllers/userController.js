@@ -26,3 +26,24 @@ exports.getLawyers = async (req, reply) => {
     return reply.code(500).send({ message: "Failed to fetch lawyers" });
   }
 };
+
+exports.deleteUser = async (req, reply) => {
+  const { id } = req.params;
+
+  try {
+    const result = await req.server.db.query(
+      "DELETE FROM users WHERE id = ?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return reply.code(404).send({ message: "User not found" });
+    }
+
+    return reply.send({ message: "User deleted successfully" });
+
+  } catch (error) {
+    console.error(error);
+    return reply.code(500).send({ message: "Server error" });
+  }
+};
