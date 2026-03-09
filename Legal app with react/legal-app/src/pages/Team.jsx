@@ -7,6 +7,8 @@ import {
   UserCog,
   MoreHorizontal,
   UserPlus,
+  Trash2,
+  Activity,
 } from "lucide-react";
 import Header from "../components/Header.jsx";
 
@@ -80,6 +82,44 @@ export default function Team() {
     return matchesSearch && matchesRole;
   });
 
+  const deleteUser = async (userId) => {
+  const currentUserId = localStorage.getItem("userId");
+
+  if (userId === Number(currentUserId)) {
+    alert("You cannot delete your own account.");
+    return;
+  }
+
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this user?",
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/users/${userId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (!res.ok) {
+      alert("Failed to delete user");
+      return;
+    }
+
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+  } catch (err) {
+    alert("Server error while deleting user");
+  }
+};
+
   return (
     <div className="flex-1 flex flex-col bg-slate-50/50 min-h-screen">
       <Header title="Personnel Directory">
@@ -96,34 +136,32 @@ export default function Team() {
         )}
 
         <div className="flex items-center justify-between mb-6">
-  <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
+            {/* Search */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search members..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-3 py-2 border rounded-lg text-sm w-64 bg-white"
+              />
+              <User className="absolute left-2 top-2.5 w-4 h-4 text-slate-400" />
+            </div>
 
-    {/* Search */}
-    <div className="relative">
-      <input
-        type="text"
-        placeholder="Search members..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="pl-9 pr-3 py-2 border rounded-lg text-sm w-64 bg-white"
-      />
-      <User className="absolute left-2 top-2.5 w-4 h-4 text-slate-400" />
-    </div>
-
-    {/* Role Filter */}
-    <select
-      value={roleFilter}
-      onChange={(e) => setRoleFilter(e.target.value)}
-      className="border rounded-lg px-3 py-2 text-sm bg-white"
-    >
-      <option value="all">All Roles</option>
-      <option value="admin">Admin</option>
-      <option value="lawyer">Lawyer</option>
-      <option value="client">Client</option>
-    </select>
-
-  </div>
-</div>
+            {/* Role Filter */}
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="border rounded-lg px-3 py-2 text-sm bg-white"
+            >
+              <option value="all">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="lawyer">Lawyer</option>
+              <option value="client">Client</option>
+            </select>
+          </div>
+        </div>
 
         <Card className="border-slate-200/60 shadow-sm overflow-hidden bg-white rounded-xl">
           <Table>
@@ -211,11 +249,17 @@ export default function Team() {
                             Management
                           </DropdownMenuLabel>
                           <DropdownMenuItem className="cursor-pointer">
-                            <UserCog className="w-4 h-4 mr-2" /> Edit
-                            Permissions
+                            <Activity className="w-4 h-4 mr-2" />
+                            View Activity
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
-                            <Mail className="w-4 h-4 mr-2" /> Reset Password
+
+                          <DropdownMenuItem
+                            disabled={user.role === "admin"}
+                            onClick={() => deleteUser(user.id)}
+                            className="text-red-600 focus:text-red-600 cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete User
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
