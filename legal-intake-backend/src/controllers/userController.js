@@ -27,23 +27,22 @@ exports.getLawyers = async (req, reply) => {
   }
 };
 
-exports.deleteUser = async (req, reply) => {
-  const { id } = req.params;
-
+exports.deleteUser = async (request, reply) => {
   try {
-    const result = await req.server.db.query(
-      "DELETE FROM users WHERE id = ?",
-      [id]
-    );
+    const { id } = request.params;
 
-    if (result.affectedRows === 0) {
+    const user = await User.findByPk(id);
+
+    if (!user) {
       return reply.code(404).send({ message: "User not found" });
     }
+
+    await user.destroy();
 
     return reply.send({ message: "User deleted successfully" });
 
   } catch (error) {
-    console.error(error);
-    return reply.code(500).send({ message: "Server error" });
+    console.error("Delete user error:", error);
+    return reply.code(500).send({ message: "Failed to delete user" });
   }
 };
