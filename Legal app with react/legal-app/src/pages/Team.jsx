@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { User, Mail, Shield, ShieldCheck, UserCog, MoreHorizontal, UserPlus } from "lucide-react";
+import {
+  User,
+  Mail,
+  Shield,
+  ShieldCheck,
+  UserCog,
+  MoreHorizontal,
+  UserPlus,
+} from "lucide-react";
 import Header from "../components/Header.jsx";
 
 // shadcn components
@@ -27,6 +35,8 @@ export default function Team() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -60,6 +70,16 @@ export default function Team() {
       .toUpperCase();
   };
 
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.name.toLowerCase().includes(search.toLowerCase()) ||
+      user.email.toLowerCase().includes(search.toLowerCase());
+
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+
+    return matchesSearch && matchesRole;
+  });
+
   return (
     <div className="flex-1 flex flex-col bg-slate-50/50 min-h-screen">
       <Header title="Personnel Directory">
@@ -75,26 +95,61 @@ export default function Team() {
           </div>
         )}
 
+        <div className="flex items-center justify-between mb-6 gap-4">
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border rounded-lg px-3 py-2 text-sm w-64"
+          />
+
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="border rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="all">All Roles</option>
+            <option value="admin">Admin</option>
+            <option value="lawyer">Lawyer</option>
+            <option value="client">Client</option>
+          </select>
+        </div>
+
         <Card className="border-slate-200/60 shadow-sm overflow-hidden bg-white rounded-xl">
           <Table>
             <TableHeader className="bg-slate-50/50">
               <TableRow>
-                <TableHead className="w-20 py-4 px-6 text-slate-500 font-bold uppercase text-[10px] tracking-widest">ID</TableHead>
-                <TableHead className="py-4 px-6 text-slate-900 font-bold uppercase text-[10px] tracking-widest">Member</TableHead>
-                <TableHead className="py-4 px-6 text-slate-900 font-bold uppercase text-[10px] tracking-widest">Role</TableHead>
-                <TableHead className="py-4 px-6 text-right text-slate-900 font-bold uppercase text-[10px] tracking-widest">Actions</TableHead>
+                <TableHead className="w-20 py-4 px-6 text-slate-500 font-bold uppercase text-[10px] tracking-widest">
+                  ID
+                </TableHead>
+                <TableHead className="py-4 px-6 text-slate-900 font-bold uppercase text-[10px] tracking-widest">
+                  Member
+                </TableHead>
+                <TableHead className="py-4 px-6 text-slate-900 font-bold uppercase text-[10px] tracking-widest">
+                  Role
+                </TableHead>
+                <TableHead className="py-4 px-6 text-right text-slate-900 font-bold uppercase text-[10px] tracking-widest">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-32 text-center text-slate-400">
+                  <TableCell
+                    colSpan={4}
+                    className="h-32 text-center text-slate-400"
+                  >
                     Syncing firm database...
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((user) => (
-                  <TableRow key={user.id} className="group hover:bg-slate-50/30 transition-colors">
+                filteredUsers.map((user) => (
+                  <TableRow
+                    key={user.id}
+                    className="group hover:bg-slate-50/30 transition-colors"
+                  >
                     <TableCell className="px-6 font-mono text-xs text-slate-400">
                       #{user.id}
                     </TableCell>
@@ -106,24 +161,32 @@ export default function Team() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-slate-900 text-sm">{user.name}</span>
-                          <span className="text-xs text-slate-500">{user.email}</span>
+                          <span className="font-semibold text-slate-900 text-sm">
+                            {user.name}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {user.email}
+                          </span>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="px-6">
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className={`capitalize px-2.5 py-0.5 font-medium border-0 ${
-                          user.role === 'admin' 
-                            ? "bg-blue-50 text-blue-700" 
-                            : user.role === 'lawyer' 
-                            ? "bg-emerald-50 text-emerald-700" 
-                            : "bg-slate-100 text-slate-700"
+                          user.role === "admin"
+                            ? "bg-blue-50 text-blue-700"
+                            : user.role === "lawyer"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-slate-100 text-slate-700"
                         }`}
                       >
-                        {user.role === 'admin' && <ShieldCheck className="w-3 h-3 mr-1" />}
-                        {user.role === 'lawyer' && <Shield className="w-3 h-3 mr-1" />}
+                        {user.role === "admin" && (
+                          <ShieldCheck className="w-3 h-3 mr-1" />
+                        )}
+                        {user.role === "lawyer" && (
+                          <Shield className="w-3 h-3 mr-1" />
+                        )}
                         {user.role}
                       </Badge>
                     </TableCell>
@@ -135,9 +198,12 @@ export default function Team() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuLabel className="text-[10px] uppercase text-slate-400">Management</DropdownMenuLabel>
+                          <DropdownMenuLabel className="text-[10px] uppercase text-slate-400">
+                            Management
+                          </DropdownMenuLabel>
                           <DropdownMenuItem className="cursor-pointer">
-                            <UserCog className="w-4 h-4 mr-2" /> Edit Permissions
+                            <UserCog className="w-4 h-4 mr-2" /> Edit
+                            Permissions
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
                             <Mail className="w-4 h-4 mr-2" /> Reset Password
