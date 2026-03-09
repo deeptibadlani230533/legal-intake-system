@@ -38,25 +38,10 @@ const getCaseActivity = async (caseId) => {
   });
 };
 
-const getUserActivity = async (userId) => {
-  return await db.AuditLog.findAll({
-    where: {
-      userId: userId
-    },
-    include: [
-      {
-        model: db.User,
-        as: "user",
-        attributes: ["id", "name", "role"],
-      },
-    ],
-    order: [["createdAt", "DESC"]],
-  });
-};
+
 
 
 module.exports = {
   logActivity,
   getCaseActivity, 
-  getUserActivity
 };

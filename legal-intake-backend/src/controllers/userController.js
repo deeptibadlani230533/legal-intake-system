@@ -47,16 +47,3 @@ exports.deleteUser = async (request, reply) => {
   }
 };
 
-exports.getUserActivity = async (request, reply) => {
-  try {
-    const { id } = request.params;
-
-    const activity = await getUserActivity(id);
-
-    return reply.send(activity);
-
-  } catch (error) {
-    console.error("Error fetching user activity:", error);
-    return reply.code(500).send({ message: "Failed to fetch user activity" });
-  }
-};
