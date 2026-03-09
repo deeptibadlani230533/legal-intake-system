@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   User,
   Shield,
@@ -63,6 +64,7 @@ export default function Team() {
     fetchUsers();
   }, []);
 
+  const navigate = useNavigate();
   const getInitials = (name) => {
     return name
       .split(" ")
@@ -105,9 +107,11 @@ export default function Team() {
   };
 
   return (
+    
     <div className="flex-1 flex flex-col bg-[#F8FAFC] min-h-screen">
       <Header title="Personnel Directory">
-        <Button size="sm" className="bg-slate-900 text-white rounded-xl hover:bg-slate-800 shadow-sm transition-all px-4">
+        <Button size="sm" className="bg-slate-900 text-white rounded-xl hover:bg-slate-800 shadow-sm transition-all px-4"
+        onClick={() => navigate("/Signup")}>
           <UserPlus className="w-4 h-4 mr-2" /> Invite Member
         </Button>
       </Header>
