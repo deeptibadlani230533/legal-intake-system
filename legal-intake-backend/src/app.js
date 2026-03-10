@@ -29,8 +29,6 @@ app.register(require('@fastify/multipart'), {
 // Routes
 app.register(require("./routes/authRoutes.js"), { prefix: "/api/auth" });
 app.register(require("./routes/protectedRoutes.js"), { prefix: "/api" });
-app.register(require("./routes/oAuthRoutes.js"));
-
 app.register(require("./routes/caseRoutes.js"), { prefix: "/api" });
 app.register(require("./routes/userRoutes.js"), { prefix: "/api" });
 app.register(require("./routes/matter.Routes.js"), { prefix: "/api" });

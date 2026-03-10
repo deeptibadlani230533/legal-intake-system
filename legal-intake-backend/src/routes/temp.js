@@ -1,7 +1,9 @@
 const fastifyOauth2 = require("@fastify/oauth2");
+const { app } = require("../app");
 
-async function oauthRoutes(fastify) {
+async function oauthRoutes(fastify, options) {
 
+  // Register OAuth plugin INSIDE this route plugin
   await fastify.register(fastifyOauth2, {
     name: "githubOAuth2",
     scope: ["user:email"],
@@ -15,16 +17,18 @@ async function oauthRoutes(fastify) {
     callbackUri: "http://13.200.123.199:3000/auth/github/callback",
   });
 
-  // STEP 1: manually create redirect route
+  // Route: start github login
   fastify.get("/auth/github", async function (request, reply) {
-    const redirect = fastify.githubOAuth2.generateAuthorizationUri(request);
-    reply.redirect(redirect);
+    const redirectUrl = fastify.githubOAuth2.generateAuthorizationUri(request);
+    reply.redirect(redirectUrl);
   });
 
-  // STEP 2: handle callback
+  // Route: github callback
   fastify.get("/auth/github/callback", async function (request, reply) {
-
-    const token = await fastify.githubOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
+    const token =
+      await fastify.githubOAuth2.getAccessTokenFromAuthorizationCodeFlow(
+        request
+      );
 
     const response = await fetch("https://api.github.com/user", {
       headers: {
@@ -36,11 +40,10 @@ async function oauthRoutes(fastify) {
 
     reply.send({
       message: "GitHub login success",
-      user: githubUser
+      user: githubUser,
     });
-
   });
-
 }
 
 module.exports = oauthRoutes;
+app.register(require("./routes/oauthRoutes.js"));
