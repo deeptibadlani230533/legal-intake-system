@@ -21,11 +21,14 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        },
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Login failed.");
 
@@ -40,6 +43,10 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loginWithGithub = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/github`;
   };
 
   return (
@@ -132,7 +139,10 @@ export default function Login() {
 
         <div className="grid grid-cols-3 gap-3">
           <SocialIconButton icon={<Chrome className="w-5 h-5" />} />
-          <SocialIconButton icon={<Github className="w-5 h-5" />} />
+          <SocialIconButton
+            icon={<Github className="w-5 h-5" />}
+            onClick={loginWithGithub}
+          />
           <SocialIconButton icon={<Apple className="w-5 h-5" />} />
         </div>
 
@@ -156,10 +166,11 @@ export default function Login() {
   );
 }
 
-function SocialIconButton({ icon }) {
+function SocialIconButton({ icon, onClick }) {
   return (
     <Button
       variant="outline"
+      onClick={onClick}
       className="h-14 border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-2xl transition-all active:scale-95"
     >
       <div className="text-slate-600">{icon}</div>
