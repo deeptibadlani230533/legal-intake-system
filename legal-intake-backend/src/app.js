@@ -40,7 +40,7 @@ app.register(require("./routes/document.Routes.js"), {
   prefix: "/api/documents",
 });
 
-
+app.register(require("./routes/oauthRoutes.js"))
 
 // Health Check
 app.get("/health", async () => {
