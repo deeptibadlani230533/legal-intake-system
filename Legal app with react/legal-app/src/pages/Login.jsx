@@ -46,6 +46,7 @@ export default function Login() {
   };
 
   const loginWithGithub = () => {
+    console.log("Login with GitHub");
     window.location.href = `${import.meta.env.VITE_API_URL}/auth/github`;
   };
 
