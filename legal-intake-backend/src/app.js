@@ -24,6 +24,20 @@ app.register(require('@fastify/multipart'), {
   
 });
 
+app.register(fastifyOauth2, {
+  name: "githubOAuth2",
+  scope: ["user:email"],
+  credentials: {
+    client: {
+      id: process.env.GITHUB_CLIENT_ID,
+      secret: process.env.GITHUB_CLIENT_SECRET,
+    },
+    auth: fastifyOauth2.GITHUB_CONFIGURATION,
+  },
+  startRedirectPath: "/auth/github",
+  callbackUri: "http://13.200.123.199:3000/auth/github/callback",
+});
+
 // Routes
 app.register(require("./routes/authRoutes.js"), { prefix: "/api/auth" });
 app.register(require("./routes/protectedRoutes.js"), { prefix: "/api" });
@@ -40,19 +54,7 @@ app.register(require("./routes/document.Routes.js"), {
   prefix: "/api/documents",
 });
 
-app.register(fastifyOauth2, {
-  name: "githubOAuth2",
-  scope: ["user:email"],
-  credentials: {
-    client: {
-      id: process.env.GITHUB_CLIENT_ID,
-      secret: process.env.GITHUB_CLIENT_SECRET,
-    },
-    auth: fastifyOauth2.GITHUB_CONFIGURATION,
-  },
-  startRedirectPath: "/auth/github",
-  callbackUri: "http://13.200.123.199:3000/auth/github/callback",
-});
+
 
 // Health Check
 app.get("/health", async () => {
