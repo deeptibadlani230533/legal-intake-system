@@ -170,6 +170,7 @@ export default function Login() {
 function SocialIconButton({ icon, onClick }) {
   return (
     <Button
+      type="button"
       variant="outline"
       onClick={onClick}
       className="h-14 border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-2xl transition-all active:scale-95"
