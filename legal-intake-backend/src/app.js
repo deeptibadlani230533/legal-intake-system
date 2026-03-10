@@ -24,21 +24,7 @@ app.register(require('@fastify/multipart'), {
   
 });
 
-app.register(async function (fastify) {
-  fastify.register(fastifyOauth2, {
-    name: "githubOAuth2",
-    scope: ["user:email"],
-    credentials: {
-      client: {
-        id: process.env.GITHUB_CLIENT_ID,
-        secret: process.env.GITHUB_CLIENT_SECRET,
-      },
-      auth: fastifyOauth2.GITHUB_CONFIGURATION,
-    },
-    startRedirectPath: "/auth/github",
-    callbackUri: "http://13.200.123.199:3000/auth/github/callback",
-  });
-});
+
 
 // Routes
 app.register(require("./routes/authRoutes.js"), { prefix: "/api/auth" });

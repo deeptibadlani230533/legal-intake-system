@@ -1,6 +1,20 @@
-const { app } = require("../app");
+const fastifyOauth2 = require("@fastify/oauth2");
 
-async function oauthRoutes(fastify, options) {
+async function oauthRoutes(fastify) {
+
+  fastify.register(fastifyOauth2, {
+    name: "githubOAuth2",
+    scope: ["user:email"],
+    credentials: {
+      client: {
+        id: process.env.GITHUB_CLIENT_ID,
+        secret: process.env.GITHUB_CLIENT_SECRET,
+      },
+      auth: fastifyOauth2.GITHUB_CONFIGURATION,
+    },
+    startRedirectPath: "/auth/github",
+    callbackUri: "http://13.200.123.199:3000/auth/github/callback",
+  });
 
   fastify.get("/auth/github/callback", async function (request, reply) {
 
@@ -9,19 +23,18 @@ async function oauthRoutes(fastify, options) {
     const response = await fetch("https://api.github.com/user", {
       headers: {
         Authorization: `Bearer ${token.token.access_token}`,
-        Accept: "application/vnd.github.v3+json",
       },
     });
 
     const githubUser = await response.json();
 
     reply.send({
-      message: "GitHub login successful",
-      user: githubUser,
+      message: "GitHub login success",
+      user: githubUser
     });
+
   });
 
 }
 
 module.exports = oauthRoutes;
-app.register(require("./routes/oauthRoutes.js"));
