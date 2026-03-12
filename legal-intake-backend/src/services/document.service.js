@@ -73,16 +73,17 @@ async function uploadDocument(request) {
 
   // Background AI processing
 setImmediate(async () => {
+  console.log(typeof pdfParse);
   try {
     console.log("Starting Gemini summarization...");
 
     const buffer = fs.readFileSync(uploadPath);
 
-    const pdf = await pdfParse(buffer);
+    const pdfData = await pdfParse(buffer);
 
-    const text = pdf.text;
+    const extractedText = pdfData.text;
 
-    const summary = await summarizeText(text);
+    const summary = await summarizeText(extractedText);
 
     await Document.update(
       { summary },

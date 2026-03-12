@@ -6,11 +6,14 @@ async function summarizeChunk(text) {
 
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+  // Limit input size to avoid API failure
+  const trimmedText = text.slice(0, 12000);
+
   const prompt = `
 Summarize the following legal document in 2-3 sentences.
 
 Document:
-${text}
+${trimmedText}
 `;
 
   const result = await model.generateContent(prompt);
