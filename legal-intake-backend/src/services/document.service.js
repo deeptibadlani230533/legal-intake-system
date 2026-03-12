@@ -78,11 +78,7 @@ async function uploadDocument(request) {
       const form = new FormData();
       form.append("file", fs.createReadStream(uploadPath));
 
-      const response = await axios.post(
-        `${process.env.AI_SERVICE_URL}/summarize-file`,
-        form,
-        { headers: form.getHeaders() },
-      );
+      const response = axios.post('http://localhost:8001/summarize-file', form)
 
       const summary = response.data.summary;
 
