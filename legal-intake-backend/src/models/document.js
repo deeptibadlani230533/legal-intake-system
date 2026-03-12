@@ -61,6 +61,10 @@ module.exports = (sequelize, DataTypes) => {
   allowNull: false,
   defaultValue: 1
 },
+summary:{
+  type: DataTypes.TEXT,
+  allowNull: true
+},
 
 
 

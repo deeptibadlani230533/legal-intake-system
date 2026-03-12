@@ -1,36 +1,39 @@
-const fs = require('fs');
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
-const { Document, Case } = require('../models');
-const ApiError = require('../utils/apiError');
+const fs = require("fs");
+const path = require("path");
+const { v4: uuidv4 } = require("uuid");
+const { Document, Case } = require("../models");
+const ApiError = require("../utils/apiError");
+const axios = require("axios");
+const FormData = require("form-data");
 
 async function uploadDocument(request) {
+  console.log("UPLOAD DOCUMENT ROUTE HIT");
 
   const file = await request.file();
 
   if (!file) {
-    throw new ApiError(400, 'No file uploaded');
+    throw new ApiError(400, "No file uploaded");
   }
 
   const caseId = file.fields?.caseId?.value;
 
   if (!caseId) {
-    throw new ApiError(400, 'caseId is required');
+    throw new ApiError(400, "caseId is required");
   }
 
   const existingCase = await Case.findByPk(caseId);
 
   if (!existingCase) {
-    throw new ApiError(404, 'Case not found');
+    throw new ApiError(404, "Case not found");
   }
 
   // Version logic
   const latestDoc = await Document.findOne({
     where: {
       caseId,
-      originalName: file.filename
+      originalName: file.filename,
     },
-    order: [['version', 'DESC']]
+    order: [["version", "DESC"]],
   });
 
   const newVersion = latestDoc ? latestDoc.version + 1 : 1;
@@ -38,7 +41,7 @@ async function uploadDocument(request) {
   const extension = path.extname(file.filename);
   const storedName = uuidv4() + extension;
 
-  const uploadDir = path.join(process.cwd(), 'uploads');
+  const uploadDir = path.join(process.cwd(), "uploads");
 
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -46,13 +49,15 @@ async function uploadDocument(request) {
 
   const uploadPath = path.join(uploadDir, storedName);
 
+  // Save file to disk
   await new Promise((resolve, reject) => {
     const writeStream = fs.createWriteStream(uploadPath);
     file.file.pipe(writeStream);
-    writeStream.on('finish', resolve);
-    writeStream.on('error', reject);
+    writeStream.on("finish", resolve);
+    writeStream.on("error", reject);
   });
 
+  // Save document immediately (summary will be added later)
   const documentRecord = await Document.create({
     caseId,
     uploadedBy: request.user.id,
@@ -61,7 +66,32 @@ async function uploadDocument(request) {
     filePath: uploadPath,
     fileType: file.mimetype,
     fileSize: file.file.bytesRead,
-    version: newVersion
+    version: newVersion,
+    summary: null,
+  });
+
+  // Background AI processing
+  setImmediate(async () => {
+    try {
+      console.log("Starting background AI summarization...");
+
+      const form = new FormData();
+      form.append("file", fs.createReadStream(uploadPath));
+
+      const response = await axios.post(
+        `${process.env.AI_SERVICE_URL}/summarize-file`,
+        form,
+        { headers: form.getHeaders() },
+      );
+
+      const summary = response.data.summary;
+
+      await Document.update({ summary }, { where: { id: documentRecord.id } });
+
+      console.log("AI summary stored for document:", documentRecord.id);
+    } catch (err) {
+      console.error("AI summarization failed:", err.message);
+    }
   });
 
   return { success: true, data: documentRecord };
@@ -71,21 +101,22 @@ async function getDocumentHistory(caseId, originalName) {
   const documents = await Document.findAll({
     where: {
       caseId,
-      originalName
+      originalName,
     },
-    order: [['version', 'DESC']]
+    order: [["version", "DESC"]],
   });
 
   if (!documents.length) {
-    throw new ApiError(404, 'No versions found for this file');
+    throw new ApiError(404, "No versions found for this file");
   }
 
   return documents;
 }
+
 async function getDocumentsByCase(caseId) {
   const docs = await Document.findAll({
     where: { caseId },
-    order: [['createdAt', 'DESC']]
+    order: [["createdAt", "DESC"]],
   });
 
   return docs;
@@ -95,11 +126,11 @@ async function downloadDocumentById(id) {
   const document = await Document.findByPk(id);
 
   if (!document) {
-    throw new ApiError(404, 'Document not found');
+    throw new ApiError(404, "Document not found");
   }
 
   if (!fs.existsSync(document.filePath)) {
-    throw new ApiError(404, 'File not found on server');
+    throw new ApiError(404, "File not found on server");
   }
 
   return document;
@@ -109,7 +140,7 @@ async function deleteDocumentById(id) {
   const document = await Document.findByPk(id);
 
   if (!document) {
-    throw new ApiError(404, 'Document not found');
+    throw new ApiError(404, "Document not found");
   }
 
   // Remove file from disk
@@ -121,7 +152,7 @@ async function deleteDocumentById(id) {
 
   return {
     success: true,
-    message: 'Document deleted successfully'
+    message: "Document deleted successfully",
   };
 }
 
@@ -130,5 +161,5 @@ module.exports = {
   getDocumentsByCase,
   downloadDocumentById,
   getDocumentHistory,
-  deleteDocumentById
+  deleteDocumentById,
 };

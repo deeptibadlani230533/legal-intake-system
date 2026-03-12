@@ -5,7 +5,6 @@ dotenv.config();
 
 const app = Fastify({ logger: true });
 exports.app = app;
-const fastifyOauth2 = require("@fastify/oauth2");
 const cors = require("@fastify/cors");
 const caseRoutes = require("./routes/caseRoutes.js");
 const userRoutes = require("./routes/userRoutes.js");
@@ -40,7 +39,6 @@ app.register(require("./routes/document.Routes.js"), {
   prefix: "/api/documents",
 });
 
-app.register(require("./routes/oauthRoutes.js"))
 
 // Health Check
 app.get("/health", async () => {
