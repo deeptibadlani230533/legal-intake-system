@@ -73,29 +73,36 @@ async function uploadDocument(request) {
 
   // Background AI processing
 setImmediate(async () => {
-  console.log(typeof pdfParse);
-  try {
-    console.log("Starting Gemini summarization...");
+    try {
+      // 1. Ensure we have the correct function reference
+      const parsePdf = typeof pdfParse === 'function' ? pdfParse : pdfParse.default;
+      
+      if (typeof parsePdf !== 'function') {
+        throw new Error("pdf-parse is not a function. Check your import.");
+      }
 
-    const buffer = fs.readFileSync(uploadPath);
+      const buffer = fs.readFileSync(uploadPath);
+      const pdfData = await parsePdf(buffer);
+      const extractedText = pdfData.text;
 
-    const pdfData = await pdfParse(buffer);
+      // 2. Get actual file size now that it's on disk
+      const stats = fs.statSync(uploadPath);
 
-    const extractedText = pdfData.text;
+      const summary = await summarizeText(extractedText);
 
-    const summary = await summarizeText(extractedText);
+      await Document.update(
+        { 
+          summary, 
+          fileSize: stats.size // Update with actual size
+        },
+        { where: { id: documentRecord.id } }
+      );
 
-    await Document.update(
-      { summary },
-      { where: { id: documentRecord.id } }
-    );
-
-    console.log("Gemini summary stored for document:", documentRecord.id);
-
-  } catch (err) {
-    console.error("Gemini summarization failed:", err.message);
-  }
-});
+      console.log("Gemini summary stored for document:", documentRecord.id);
+    } catch (err) {
+      console.error("Gemini processing failed:", err.message);
+    }
+  });
 
   return { success: true, data: documentRecord };
 }
