@@ -3,8 +3,9 @@ const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 const { Document, Case } = require("../models");
 const ApiError = require("../utils/apiError");
-const axios = require("axios");
-const FormData = require("form-data");
+const summarizeText = require("../services/geminiService");
+const pdfParse = require("pdf-parse");
+
 
 async function uploadDocument(request) {
   console.log("UPLOAD DOCUMENT ROUTE HIT");
@@ -71,24 +72,29 @@ async function uploadDocument(request) {
   });
 
   // Background AI processing
-  setImmediate(async () => {
-    try {
-      console.log("Starting background AI summarization...");
+setImmediate(async () => {
+  try {
+    console.log("Starting Gemini summarization...");
 
-      const form = new FormData();
-      form.append("file", fs.createReadStream(uploadPath));
+    const buffer = fs.readFileSync(uploadPath);
 
-      const response = axios.post('http://localhost:8001/summarize-file', form)
+    const pdf = await pdfParse(buffer);
 
-      const summary = response.data.summary;
+    const text = pdf.text;
 
-      await Document.update({ summary }, { where: { id: documentRecord.id } });
+    const summary = await summarizeText(text);
 
-      console.log("AI summary stored for document:", documentRecord.id);
-    } catch (err) {
-      console.error("AI summarization failed:", err.message);
-    }
-  });
+    await Document.update(
+      { summary },
+      { where: { id: documentRecord.id } }
+    );
+
+    console.log("Gemini summary stored for document:", documentRecord.id);
+
+  } catch (err) {
+    console.error("Gemini summarization failed:", err.message);
+  }
+});
 
   return { success: true, data: documentRecord };
 }
