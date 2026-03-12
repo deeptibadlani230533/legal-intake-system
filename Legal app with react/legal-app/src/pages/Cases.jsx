@@ -158,7 +158,7 @@ export default function Cases() {
       <main className="max-w-6xl mx-auto w-full px-6 py-10 space-y-6">
 
         <div className="flex justify-between">
-          <h1 className="text-3xl font-semibold">Case Directory</h1>
+          <h1 className="text-3xl font-semibold">Case Directory Test</h1>
         </div>
 
         <CaseTable
