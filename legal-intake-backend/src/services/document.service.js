@@ -4,7 +4,8 @@ const { v4: uuidv4 } = require("uuid");
 const { Document, Case } = require("../models");
 const ApiError = require("../utils/apiError");
 const summarizeText = require("../services/geminiService");
-const pdfParse = require("pdf-parse");
+const pdfParseLib = require("pdf-parse");
+const pdfParse = pdfParseLib.default || pdfParseLib;
 
 
 async function uploadDocument(request) {
