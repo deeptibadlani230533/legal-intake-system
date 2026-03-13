@@ -8,34 +8,53 @@ export default function DocumentSummary() {
   const { document } = location.state || {};
 
   const [step, setStep] = useState(0);
-  const [showSummary, setShowSummary] = useState(false);
+  const [summary, setSummary] = useState(document?.summary || null);
+  const [loading, setLoading] = useState(true);
+
+  const token = localStorage.getItem("token");
+
+  const steps = [
+    "Analyzing document structure...",
+    "Extracting legal entities...",
+    "Generating AI summary...",
+    "Waiting for AI response...",
+  ];
 
   useEffect(() => {
     if (!document) return;
 
-    const steps = [
-      "Analyzing document structure...",
-      "Extracting legal entities...",
-      "Generating AI summary...",
-    ];
+    /* Step animation */
+    const stepInterval = setInterval(() => {
+      setStep((prev) => (prev + 1) % steps.length);
+    }, 1500);
 
-    let current = 0;
+    /* Poll backend every 2 seconds */
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/documents/${document.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-    const interval = setInterval(() => {
-      current++;
+        const result = await res.json();
 
-      if (current < steps.length) {
-        setStep(current);
-      } else {
-        clearInterval(interval);
-
-        setTimeout(() => {
-          setShowSummary(true);
-        }, 500);
+        if (result?.data?.summary) {
+          setSummary(result.data.summary);
+          setLoading(false);
+          clearInterval(poll);
+          clearInterval(stepInterval);
+        }
+      } catch (err) {
+        console.error("Polling failed");
       }
-    }, 1000);
+    }, 2000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(poll);
+      clearInterval(stepInterval);
+    };
   }, [document]);
 
   if (!document) {
@@ -46,15 +65,9 @@ export default function DocumentSummary() {
     );
   }
 
-  const steps = [
-    "Analyzing document structure...",
-    "Extracting legal entities...",
-    "Generating AI summary...",
-  ];
-
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      
+
       {/* Header */}
       <div className="flex items-center gap-3">
         <FileText className="w-6 h-6 text-blue-600" />
@@ -71,8 +84,8 @@ export default function DocumentSummary() {
         </div>
       </Card>
 
-      {/* AI Processing Animation */}
-      {!showSummary && (
+      {/* Loading */}
+      {loading && (
         <Card className="p-6 space-y-4 border-blue-100 bg-blue-50">
 
           <div className="flex items-center gap-3">
@@ -82,42 +95,28 @@ export default function DocumentSummary() {
             </span>
           </div>
 
-          <div className="space-y-2 text-sm text-slate-600">
-            {steps.map((s, index) => (
-              <div
-                key={index}
-                className={`transition-all ${
-                  index <= step ? "opacity-100" : "opacity-30"
-                }`}
-              >
-                • {s}
-              </div>
-            ))}
+          <div className="text-sm text-slate-600">
+            • {steps[step]}
           </div>
 
         </Card>
       )}
 
       {/* Summary */}
-      {showSummary && (
+      {!loading && summary && (
         <Card className="p-6 space-y-3">
 
           <h2 className="font-semibold text-slate-900">
             AI Generated Summary
           </h2>
 
-          {document.summary ? (
-            <p className="text-sm text-slate-600 leading-7 whitespace-pre-line">
-              {document.summary}
-            </p>
-          ) : (
-            <p className="text-sm text-slate-500">
-              No summary available for this document.
-            </p>
-          )}
+          <p className="text-sm text-slate-600 leading-7 whitespace-pre-line">
+            {summary}
+          </p>
 
         </Card>
       )}
+
     </div>
   );
 }
