@@ -164,13 +164,17 @@ async function generateAISummary(documentId) {
 
   const path = require("path");
 
-  const containerPath = path.join(
-    process.cwd(),
-    "uploads",
-    path.basename(document.filePath)
-  );
 
-  const summary = await summarizeText(containerPath);
+const resolvedPath = path.resolve(document.filePath);
+
+console.log("Checking file:", resolvedPath);
+
+if (!fs.existsSync(resolvedPath)) {
+  console.log("File missing:", resolvedPath);
+  return { success: false, message: "File not found on server" };
+}
+
+const summary = await summarizeText(resolvedPath);
 
   await document.update({ summary });
 
