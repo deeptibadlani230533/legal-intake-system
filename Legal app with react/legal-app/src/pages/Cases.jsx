@@ -69,7 +69,7 @@ export default function Cases() {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/users/lawyers`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       const data = await res.json();
@@ -99,7 +99,7 @@ export default function Cases() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ lawyerId: selectedLawyer }),
-        }
+        },
       );
 
       const data = await res.json();
@@ -109,8 +109,8 @@ export default function Cases() {
 
       setCases((prev) =>
         prev.map((c) =>
-          c.id === caseToAssign.id ? { ...c, status: "assigned" } : c
-        )
+          c.id === caseToAssign.id ? { ...c, status: "assigned" } : c,
+        ),
       );
 
       setIsAssignDialogOpen(false);
@@ -134,7 +134,7 @@ export default function Cases() {
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const data = await res.json();
@@ -182,7 +182,6 @@ export default function Cases() {
       <Header />
 
       <main className="w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-8 space-y-6">
-
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
           <div className="space-y-1">
@@ -201,7 +200,6 @@ export default function Cases() {
           </div>
 
           <div className="flex items-center gap-3">
-
             {/* SEARCH */}
             <div className="relative hidden lg:block">
               <Search
@@ -218,13 +216,15 @@ export default function Cases() {
               />
             </div>
 
-            <Button
-              onClick={() => navigate("/intake")}
-              className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl px-5 shadow-lg shadow-slate-200 flex items-center gap-2"
-            >
-              <Plus size={18} />
-              New Intake
-            </Button>
+            {role === "client" && (
+              <Button
+                onClick={() => navigate("/intake")}
+                className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl px-5 shadow-lg shadow-slate-200 flex items-center gap-2"
+              >
+                <Plus size={18} />
+                New Intake
+              </Button>
+            )}
           </div>
         </div>
 
@@ -252,7 +252,6 @@ export default function Cases() {
 
         {/* Table */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden ring-1 ring-slate-100">
-
           <div className="bg-slate-50/50 border-b border-slate-100 px-6 py-4 flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-tighter">
               Database Records
