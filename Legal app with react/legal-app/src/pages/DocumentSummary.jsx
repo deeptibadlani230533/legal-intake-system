@@ -32,21 +32,24 @@ export default function DocumentSummary() {
     const poll = setInterval(async () => {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/documents/${document.id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+  `${import.meta.env.VITE_API_URL}/api/documents/case/${document.caseId}`,
+  {
+    headers: { Authorization: `Bearer ${token}` },
+  }
+);
 
-        const result = await res.json();
+const result = await res.json();
 
-        if (result?.data?.summary) {
-          setSummary(result.data.summary);
-          setLoading(false);
-          clearInterval(poll);
-          clearInterval(stepInterval);
-        }
-      } catch (err) {
+if (result.success) {
+  const doc = result.data.find((d) => d.id === document.id);
+
+  if (doc && doc.summary) {
+    setSummary(doc.summary);
+    setLoading(false);
+    clearInterval(poll);
+    clearInterval(stepInterval);
+  }
+} }catch (err) {
         console.error("Polling failed");
       }
     }, 2000);
