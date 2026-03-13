@@ -71,7 +71,7 @@ async function uploadDocument(request) {
   });
 
   // Background AI processing
-setImmediate(async () => {
+/*setImmediate(async () => {
   try {
     const stats = fs.statSync(uploadPath);
 
@@ -89,7 +89,7 @@ const summary = await summarizeText(uploadPath);
   } catch (err) {
     console.error("Gemini processing failed:", err.message);
   }
-});
+});*/
 
   return { success: true, data: documentRecord };
 }
@@ -153,10 +153,35 @@ async function deleteDocumentById(id) {
   };
 }
 
+
+async function generateAISummary(documentId) {
+
+  const document = await Document.findByPk(documentId);
+
+  if (!document) {
+    throw new ApiError(404, "Document not found");
+  }
+
+  if (!fs.existsSync(document.filePath)) {
+    throw new ApiError(404, "File not found on server");
+  }
+
+  const summary = await summarizeText(document.filePath);
+
+  await document.update({ summary });
+
+  return {
+    success: true,
+    message: "AI summary generated",
+    summary
+  };
+}
+
 module.exports = {
   uploadDocument,
   getDocumentsByCase,
   downloadDocumentById,
   getDocumentHistory,
   deleteDocumentById,
+  generateAISummary
 };

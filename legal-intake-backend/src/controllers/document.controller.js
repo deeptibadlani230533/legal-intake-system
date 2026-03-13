@@ -47,11 +47,19 @@ async function deleteDocument(request, reply) {
   return reply.send(result);
 }
 
+async function generateAISummaryController(request, reply) {
+  const { id } = request.params;
+
+  const result = await documentService.generateAISummary(id);
+
+  reply.send(result);
+}
 
 module.exports = {
   uploadDocument,
   getDocumentsByCase,
   downloadDocument,
   getDocumentHistory,
-  deleteDocument
+  deleteDocument,
+  generateAISummaryController
 };
