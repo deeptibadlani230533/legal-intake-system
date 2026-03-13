@@ -7,31 +7,35 @@ export default function DocumentSummary() {
   const location = useLocation();
   const { document } = location.state || {};
 
-  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
 
   useEffect(() => {
     if (!document) return;
 
-    const viewedKey = `summary_viewed_${document.id}`;
-    const alreadyViewed = localStorage.getItem(viewedKey);
+    const steps = [
+      "Analyzing document structure...",
+      "Extracting legal entities...",
+      "Generating AI summary...",
+    ];
 
-    if (!document.summary) {
-      setShowSummary(true);
-      return;
-    }
+    let current = 0;
 
-    if (alreadyViewed) {
-      setShowSummary(true);
-    } else {
-      setLoading(true);
+    const interval = setInterval(() => {
+      current++;
 
-      setTimeout(() => {
-        setLoading(false);
-        setShowSummary(true);
-        localStorage.setItem(viewedKey, "true");
-      }, 3000); // fake AI processing delay
-    }
+      if (current < steps.length) {
+        setStep(current);
+      } else {
+        clearInterval(interval);
+
+        setTimeout(() => {
+          setShowSummary(true);
+        }, 500);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, [document]);
 
   if (!document) {
@@ -42,8 +46,15 @@ export default function DocumentSummary() {
     );
   }
 
+  const steps = [
+    "Analyzing document structure...",
+    "Extracting legal entities...",
+    "Generating AI summary...",
+  ];
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
+      
       {/* Header */}
       <div className="flex items-center gap-3">
         <FileText className="w-6 h-6 text-blue-600" />
@@ -60,19 +71,37 @@ export default function DocumentSummary() {
         </div>
       </Card>
 
-      {/* Loading Animation */}
-      {loading && (
-        <Card className="p-6 flex items-center gap-3 bg-blue-50 border-blue-100">
-          <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-          <span className="text-blue-700 text-sm font-medium">
-            AI is analyzing the document...
-          </span>
+      {/* AI Processing Animation */}
+      {!showSummary && (
+        <Card className="p-6 space-y-4 border-blue-100 bg-blue-50">
+
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+            <span className="text-sm font-semibold text-blue-700">
+              AI is processing your document
+            </span>
+          </div>
+
+          <div className="space-y-2 text-sm text-slate-600">
+            {steps.map((s, index) => (
+              <div
+                key={index}
+                className={`transition-all ${
+                  index <= step ? "opacity-100" : "opacity-30"
+                }`}
+              >
+                • {s}
+              </div>
+            ))}
+          </div>
+
         </Card>
       )}
 
       {/* Summary */}
       {showSummary && (
         <Card className="p-6 space-y-3">
+
           <h2 className="font-semibold text-slate-900">
             AI Generated Summary
           </h2>
@@ -86,6 +115,7 @@ export default function DocumentSummary() {
               No summary available for this document.
             </p>
           )}
+
         </Card>
       )}
     </div>
