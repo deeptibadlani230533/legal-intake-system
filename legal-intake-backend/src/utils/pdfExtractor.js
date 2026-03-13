@@ -1,25 +1,12 @@
 const fs = require("fs");
-const pdfjsLib = require("pdfjs-dist");
-
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  require("pdfjs-dist/build/pdf.worker.js");
+const pdfParse = require("pdf-parse");
 
 async function extractTextFromPDF(filePath) {
-  const data = new Uint8Array(fs.readFileSync(filePath));
+  const buffer = fs.readFileSync(filePath);
 
-  const pdf = await pdfjsLib.getDocument({ data }).promise;
+  const data = await pdfParse(buffer);
 
-  let textContent = "";
-
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-
-    const strings = content.items.map(item => item.str);
-    textContent += strings.join(" ") + "\n";
-  }
-
-  return textContent;
+  return data.text;
 }
 
 module.exports = extractTextFromPDF;
