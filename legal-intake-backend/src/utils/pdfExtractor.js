@@ -1,5 +1,8 @@
 const fs = require("fs");
-const pdfjsLib = require("pdfjs-dist/legacy/build/pdf.js");
+const pdfjsLib = require("pdfjs-dist");
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  require("pdfjs-dist/build/pdf.worker.js");
 
 async function extractTextFromPDF(filePath) {
   const data = new Uint8Array(fs.readFileSync(filePath));
