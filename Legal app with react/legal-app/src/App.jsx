@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import Navbar from "./components/Navbar"; 
+import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
 import LawyerDashboard from "./pages/LawyerDashboard";
 import Cases from "./pages/Cases";
@@ -12,23 +12,22 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
-
-<Route path="/signup" element={<Signup />} /> 
-import { CommandMenu } from "./components/CommandMenu"; 
+import DocumentSummary from "./pages/DocumentSummary";
+<Route path="/signup" element={<Signup />} />;
+import { CommandMenu } from "./components/CommandMenu";
 
 export default function App() {
   const token = localStorage.getItem("token");
   const location = useLocation();
 
-  
   if (
-  !token &&
-  location.pathname !== "/login" &&
-  location.pathname !== "/signup"&&
-  location.pathname !== "/forgot-password"
-) {
-  return <Navigate to="/login" />;
-}
+    !token &&
+    location.pathname !== "/login" &&
+    location.pathname !== "/signup" &&
+    location.pathname !== "/forgot-password"
+  ) {
+    return <Navigate to="/login" />;
+  }
 
   if (token && location.pathname === "/login") {
     return <Navigate to="/dashboard" />;
@@ -36,16 +35,13 @@ export default function App() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 font-sans">
-      
-      
       {token && (
         <>
           <Navbar />
-          <CommandMenu /> 
+          <CommandMenu />
         </>
       )}
 
-      
       <div className="flex-1 w-full">
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -53,15 +49,19 @@ export default function App() {
           <Route path="/cases" element={<Cases />} />
           <Route path="/cases/:id" element={<CaseDetail />} />
           <Route path="/intake" element={<Intake />} />
-          <Route path="/cases/:id/edit" element={<EditCase />}/>
-          <Route path="/team" element={<Team />}/>
-          <Route path="/reports" element={<Reports/>}/>
+          <Route path="/cases/:id/edit" element={<EditCase />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/lawyer/dashboard" element={<LawyerDashboard />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          
+
           <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route
+            path="/documents/:docId/summary"
+            element={<DocumentSummary />}
+          />
         </Routes>
       </div>
     </div>
