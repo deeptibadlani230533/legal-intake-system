@@ -1,25 +1,24 @@
+const fs = require("fs");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-async function summarizeChunk(text) {
-
+async function summarizeText(filePath) {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  // Limit input size to avoid API failure
-  const trimmedText = text.slice(0, 12000);
+  const fileBuffer = fs.readFileSync(filePath);
 
-  const prompt = `
-Summarize the following legal document in 2-3 sentences.
+  const result = await model.generateContent([
+    {
+      inlineData: {
+        data: fileBuffer.toString("base64"),
+        mimeType: "application/pdf",
+      },
+    },
+    "Summarize this legal document clearly in bullet points.",
+  ]);
 
-Document:
-${trimmedText}
-`;
-
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-
-  return response.text();
+  return result.response.text();
 }
 
-module.exports = summarizeChunk;
+module.exports = summarizeText;

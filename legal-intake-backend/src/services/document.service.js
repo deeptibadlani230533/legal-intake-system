@@ -4,7 +4,6 @@ const { v4: uuidv4 } = require("uuid");
 const { Document, Case } = require("../models");
 const ApiError = require("../utils/apiError");
 const summarizeText = require("../services/geminiService");
-const extractTextFromPDF = require("../utils/pdfExtractor");
 
 
 async function uploadDocument(request) {
@@ -74,11 +73,9 @@ async function uploadDocument(request) {
   // Background AI processing
 setImmediate(async () => {
   try {
-    const extractedText = await extractTextFromPDF(uploadPath);
-
     const stats = fs.statSync(uploadPath);
 
-    const summary = await summarizeText(extractedText);
+const summary = await summarizeText(uploadPath);
 
     await Document.update(
       {
