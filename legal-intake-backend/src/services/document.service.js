@@ -4,8 +4,7 @@ const { v4: uuidv4 } = require("uuid");
 const { Document, Case } = require("../models");
 const ApiError = require("../utils/apiError");
 const summarizeText = require("../services/geminiService");
-const pdfParseLib = require("pdf-parse");
-const pdfParse = pdfParseLib.default || pdfParseLib;
+const extractTextFromPDF = require("../utils/pdfExtractor");
 
 
 async function uploadDocument(request) {
@@ -74,36 +73,26 @@ async function uploadDocument(request) {
 
   // Background AI processing
 setImmediate(async () => {
-    try {
-      // 1. Ensure we have the correct function reference
-      const parsePdf = typeof pdfParse === 'function' ? pdfParse : pdfParse.default;
-      
-      if (typeof parsePdf !== 'function') {
-        throw new Error("pdf-parse is not a function. Check your import.");
-      }
+  try {
+    const extractedText = await extractTextFromPDF(uploadPath);
 
-      const buffer = fs.readFileSync(uploadPath);
-      const pdfData = await parsePdf(buffer);
-      const extractedText = pdfData.text;
+    const stats = fs.statSync(uploadPath);
 
-      // 2. Get actual file size now that it's on disk
-      const stats = fs.statSync(uploadPath);
+    const summary = await summarizeText(extractedText);
 
-      const summary = await summarizeText(extractedText);
+    await Document.update(
+      {
+        summary,
+        fileSize: stats.size,
+      },
+      { where: { id: documentRecord.id } }
+    );
 
-      await Document.update(
-        { 
-          summary, 
-          fileSize: stats.size // Update with actual size
-        },
-        { where: { id: documentRecord.id } }
-      );
-
-      console.log("Gemini summary stored for document:", documentRecord.id);
-    } catch (err) {
-      console.error("Gemini processing failed:", err.message);
-    }
-  });
+    console.log("Gemini summary stored for document:", documentRecord.id);
+  } catch (err) {
+    console.error("Gemini processing failed:", err.message);
+  }
+});
 
   return { success: true, data: documentRecord };
 }
