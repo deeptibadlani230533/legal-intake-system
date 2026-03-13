@@ -33,9 +33,9 @@ If it is NOT a legal document:
 - Explain the main idea, important information, and key takeaways.
 
 Output format:
-1 short paragraph summary  
-followed by  
-3–5 key bullet points.
+1 short paragraph 3-4 lines maximum 
+followed by 3-4 key bullet points and takeaways
+the bullet points should be short not very long
 
 Use clear, professional language.
 `;
