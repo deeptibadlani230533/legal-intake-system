@@ -48,7 +48,7 @@ async function deleteDocument(request, reply) {
 }
 
 async function generateAISummaryController(request, reply) {
-  const { id } = request.params;
+  const { id } = request.body;
 
   const result = await documentService.generateAISummary(id);
 

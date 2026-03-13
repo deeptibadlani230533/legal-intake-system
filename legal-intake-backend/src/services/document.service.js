@@ -159,14 +159,18 @@ async function generateAISummary(documentId) {
   const document = await Document.findByPk(documentId);
 
   if (!document) {
-    throw new ApiError(404, "Document not found");
+    return { success: false, message: "Document not found" };
   }
 
-  if (!fs.existsSync(document.filePath)) {
-    throw new ApiError(404, "File not found on server");
-  }
+  const path = require("path");
 
-  const summary = await summarizeText(document.filePath);
+  const containerPath = path.join(
+    process.cwd(),
+    "uploads",
+    path.basename(document.filePath)
+  );
+
+  const summary = await summarizeText(containerPath);
 
   await document.update({ summary });
 
