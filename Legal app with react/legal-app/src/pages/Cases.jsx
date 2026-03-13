@@ -244,7 +244,7 @@ export default function Cases() {
           />
           <StatCard
             label="Unassigned"
-            value={stats.pending}
+            value={stats.open}
             icon={<AlertCircle className="text-amber-600" />}
             color="amber"
           />
