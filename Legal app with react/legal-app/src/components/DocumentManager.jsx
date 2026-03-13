@@ -50,6 +50,8 @@ export default function DocumentManager({ caseId, role }) {
   const [uploading, setUploading] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showSummary, setShowSummary] = useState({});
+  const [loadingSummary, setLoadingSummary] = useState({});
 
   const token = localStorage.getItem("token");
 
@@ -174,6 +176,16 @@ export default function DocumentManager({ caseId, role }) {
   } catch (err) {
     toast.error("Delete failed.");
   }
+};
+
+
+const handleGenerateSummary = (docId) => {
+  setLoadingSummary((prev) => ({ ...prev, [docId]: true }));
+
+  setTimeout(() => {
+    setLoadingSummary((prev) => ({ ...prev, [docId]: false }));
+    setShowSummary((prev) => ({ ...prev, [docId]: true }));
+  }, 3000);
 };
 
   /* -------------------------------- */
@@ -309,27 +321,72 @@ export default function DocumentManager({ caseId, role }) {
       ) : (
         /* CONFIRM DELETE VIEW */
         <div className="space-y-4 text-sm mt-2">
-          <p className="text-slate-600">
-            Are you sure you want to delete this document?
-            This action cannot be undone.
-          </p>
+  <div className="flex justify-between">
+    <span className="text-slate-500">Version</span>
+    <span>v{selectedDoc.version || 1}</span>
+  </div>
 
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setConfirmDelete(false)}
-            >
-              Cancel
-            </Button>
+  <div className="flex justify-between">
+    <span className="text-slate-500">Uploaded On</span>
+    <span>{new Date(selectedDoc.createdAt).toLocaleDateString()}</span>
+  </div>
 
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-            >
-              Delete
-            </Button>
-          </div>
-        </div>
+  <div className="flex justify-between">
+    <span className="text-slate-500">File Type</span>
+    <span>{selectedDoc.fileType || "Unknown"}</span>
+  </div>
+
+  <Button
+    className="w-full bg-blue-600 hover:bg-blue-700"
+    onClick={() => handleDownload(selectedDoc.id, selectedDoc.originalName)}
+  >
+    Download File
+  </Button>
+
+  {(role === "admin" || role === "lawyer") &&
+    !showSummary[selectedDoc.id] &&
+    !loadingSummary[selectedDoc.id] && (
+      <Button
+        variant="outline"
+        className="w-full"
+        onClick={() => handleGenerateSummary(selectedDoc.id)}
+      >
+        Generate AI Summary
+      </Button>
+    )}
+
+  {loadingSummary[selectedDoc.id] && (
+    <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-3 text-blue-700">
+      <Loader2 className="w-4 h-4 animate-spin" />
+      <span className="text-sm font-medium">Analyzing document and generating AI summary...</span>
+    </div>
+  )}
+
+  {showSummary[selectedDoc.id] && (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+      <h4 className="text-sm font-semibold text-slate-800">AI Summary</h4>
+      {selectedDoc.summary ? (
+        <p className="text-sm leading-6 text-slate-600 whitespace-pre-line">
+          {selectedDoc.summary}
+        </p>
+      ) : (
+        <p className="text-sm text-slate-500">
+          Summary is not available for this document yet.
+        </p>
+      )}
+    </div>
+  )}
+
+  {role === "admin" && (
+    <Button
+      variant="destructive"
+      className="w-full"
+      onClick={() => setConfirmDelete(true)}
+    >
+      Delete Document
+    </Button>
+  )}
+</div>
       )}
     </DialogContent>
   )}
