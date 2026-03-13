@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import Header from "../components/Header.jsx";
 
+import Header from "../components/Header.jsx";
 import CaseTable from "../components/cases/CaseTable.jsx";
 import AssignLawyerDialog from "../components/cases/AssignLawyerDialog.jsx";
 import ArchiveCaseDialog from "../components/cases/ArchiveCaseDialog.jsx";
@@ -99,18 +99,15 @@ export default function Cases() {
 
       toast.success("Counsel assigned successfully");
 
-      setCases(prev =>
-        prev.map(c =>
-          c.id === caseToAssign.id
-            ? { ...c, status: "assigned" }
-            : c
+      setCases((prev) =>
+        prev.map((c) =>
+          c.id === caseToAssign.id ? { ...c, status: "assigned" } : c
         )
       );
 
       setIsAssignDialogOpen(false);
       setSelectedLawyer("");
       setCaseToAssign(null);
-
     } catch (err) {
       toast.error(err.message || "Assignment failed");
     } finally {
@@ -137,13 +134,10 @@ export default function Cases() {
 
       toast.success("Matter archived successfully");
 
-      setCases(prev =>
-        prev.filter(c => c.id !== caseToArchive.id)
-      );
+      setCases((prev) => prev.filter((c) => c.id !== caseToArchive.id));
 
       setIsArchiveDialogOpen(false);
       setCaseToArchive(null);
-
     } catch (err) {
       toast.error(err.message || "Archive failed");
     } finally {
@@ -152,30 +146,44 @@ export default function Cases() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-white min-h-screen">
+    <div className="flex-1 flex flex-col bg-slate-50 min-h-screen">
       <Header />
 
-      <main className="max-w-6xl mx-auto w-full px-6 py-10 space-y-6">
+      <main className="w-full max-w-[1400px] mx-auto px-8 py-10 space-y-8">
 
-        <div className="flex justify-between">
-          <h1 className="text-3xl font-semibold">Case Directory CI/CD</h1>
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold text-slate-900">
+              Case Directory
+            </h1>
+
+            <p className="text-sm text-slate-500 mt-1">
+              Manage and review all legal matters
+            </p>
+          </div>
         </div>
 
-        <CaseTable
-          cases={cases}
-          loading={loading}
-          role={role}
-          onView={(id) => navigate(`/cases/${id}`)}
-          onAssignClick={(item) => {
-            setCaseToAssign(item);
-            setIsAssignDialogOpen(true);
-          }}
-          onArchiveClick={(item) => {
-            setCaseToArchive(item);
-            setIsArchiveDialogOpen(true);
-          }}
-          onCreate={() => navigate("/intake")}
-        />
+        {/* Table Container */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+
+          <CaseTable
+            cases={cases}
+            loading={loading}
+            role={role}
+            onView={(id) => navigate(`/cases/${id}`)}
+            onAssignClick={(item) => {
+              setCaseToAssign(item);
+              setIsAssignDialogOpen(true);
+            }}
+            onArchiveClick={(item) => {
+              setCaseToArchive(item);
+              setIsArchiveDialogOpen(true);
+            }}
+            onCreate={() => navigate("/intake")}
+          />
+
+        </div>
 
       </main>
 
@@ -196,7 +204,6 @@ export default function Cases() {
         onArchive={archiveCase}
         isArchiving={isArchiving}
       />
-
     </div>
   );
 }
