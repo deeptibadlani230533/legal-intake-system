@@ -141,11 +141,13 @@ export default function Cases() {
     );
   });
 
-  const stats = {
-    total: cases.length,
-    active: cases.filter((c) => c.status !== "closed").length,
-    pending: cases.filter((c) => !c.lawyerId).length,
-  };
+ const stats = {
+  total: cases.length,
+  active: cases.filter((c) => c.status !== "closed").length,
+  pending: cases.filter(
+    (c) => !c.assignedLawyerId && c.status !== "closed"
+  ).length,
+};
 
   return (
     <>
