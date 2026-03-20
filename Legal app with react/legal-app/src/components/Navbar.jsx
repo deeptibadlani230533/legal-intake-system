@@ -1,164 +1,318 @@
 import React, { useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { UserCircle, LogOut, Briefcase, LayoutDashboard, PlusCircle, Settings, Users, ShieldCheck } from "lucide-react";
-import { 
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator 
+import {
+  UserCircle, LogOut, Briefcase, LayoutDashboard,
+  PlusCircle, Settings, Users, ChevronDown,
+} from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge"; // Ensure you have this shadcn component
 import NotificationBell from "../components/NotificationBell";
 
 export default function Navbar() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const role = localStorage.getItem("role") || "user";
-  const closeTimeout = useRef(null);
+  const location  = useLocation();
+  const navigate  = useNavigate();
+  const role      = localStorage.getItem("role") || "user";
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const closeTimer = useRef(null);
 
   const dashboardPath = role === "lawyer" ? "/lawyer/dashboard" : "/dashboard";
 
-  // Logic for the Role Badge Colors
-  const roleStyles = {
-    admin: "bg-red-50 text-red-700 border-red-100",
-    lawyer: "bg-blue-50 text-blue-700 border-blue-100",
-    client: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    user: "bg-slate-50 text-slate-700 border-slate-100",
+  const roleConfig = {
+    admin:  { label: "Admin",  bg: "#fdf4f3", color: "#c0392b", border: "#f5c6c2" },
+    lawyer: { label: "Lawyer", bg: "#eef4fd", color: "#2859a0", border: "#bdd3f5" },
+    client: { label: "Client", bg: "#edfaf2", color: "#2d7a4f", border: "#a8dfc0" },
+    user:   { label: "User",   bg: "#f4f2ee", color: "#6b6355", border: "#e5e0d8" },
   };
 
-  const handleMouseEnter = () => {
-    if (closeTimeout.current) clearTimeout(closeTimeout.current);
-    setIsMenuOpen(true);
-  };
+  const rc = roleConfig[role] || roleConfig.user;
 
-  const handleMouseLeave = () => {
-    closeTimeout.current = setTimeout(() => {
-      setIsMenuOpen(false);
-    }, 150);
-  };
+  // Generous delay (220ms) lets the cursor travel from trigger → panel without gap-closing
+  const openMenu  = () => { clearTimeout(closeTimer.current); setIsMenuOpen(true); };
+  const closeMenu = () => { closeTimer.current = setTimeout(() => setIsMenuOpen(false), 220); };
 
   const navLinks = [
-    { name: "Dashboard", path: dashboardPath, icon: <LayoutDashboard className="w-4 h-4" /> },
-    { name: "Case Directory", path: "/cases", icon: <Briefcase className="w-4 h-4" /> },
+    { name: "Dashboard",      path: dashboardPath, icon: LayoutDashboard },
+    { name: "Case Directory", path: "/cases",       icon: Briefcase       },
   ];
 
   return (
-    <nav className="border-b border-slate-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          
-          {/* Left: Brand & Nav */}
-          <div className="flex items-center gap-10">
-            <Link to={dashboardPath} className="flex items-center gap-2 transition-opacity hover:opacity-80">
-              <div className="bg-blue-600 p-1.5 rounded-lg text-white">
-                <Briefcase className="w-5 h-5" />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+        .nav-root {
+          height: 64px;
+          background: #fff;
+          border-bottom: 1px solid #e5e0d8;
+          position: sticky; top: 0;
+          z-index: 100;   /* navbar layer */
+          font-family: 'Inter', sans-serif;
+        }
+
+        .nav-inner {
+          max-width: 1200px; margin: 0 auto;
+          padding: 0 32px; height: 100%;
+          display: flex; align-items: center;
+          justify-content: space-between; gap: 24px;
+        }
+
+        /* ── Left ── */
+        .nav-left { display: flex; align-items: center; gap: 36px; }
+
+        .nav-brand {
+          display: flex; align-items: center; gap: 10px;
+          text-decoration: none; flex-shrink: 0;
+        }
+
+        .nav-brand-icon {
+          width: 32px; height: 32px;
+          background: linear-gradient(135deg, #c4a158, #e2c07a);
+          border-radius: 8px;
+          display: flex; align-items: center; justify-content: center;
+        }
+
+        .nav-brand-name {
+          font-family: 'Playfair Display', serif;
+          font-size: 18px; font-weight: 500;
+          color: #1a1a1a; letter-spacing: 0.02em;
+        }
+        .nav-brand-name b { color: #c4a158; font-weight: 600; }
+
+        .nav-links { display: flex; align-items: center; gap: 2px; }
+
+        .nav-link {
+          display: flex; align-items: center; gap: 7px;
+          padding: 7px 14px; border-radius: 9px;
+          font-size: 13px; font-weight: 500; color: #9a9485;
+          text-decoration: none;
+          transition: background 0.15s, color 0.15s;
+          position: relative; white-space: nowrap;
+        }
+        .nav-link:hover       { background: #f4f2ee; color: #1a1a1a; }
+        .nav-link.active      { background: rgba(196,161,88,0.08); color: #1a1a1a; }
+        .nav-link-bar {
+          position: absolute; bottom: -17px; left: 14px; right: 14px;
+          height: 2px; background: #c4a158; border-radius: 999px;
+        }
+
+        /* ── Right ── */
+        .nav-right { display: flex; align-items: center; gap: 10px; }
+
+        .nav-new-btn {
+          display: flex; align-items: center; gap: 7px;
+          height: 36px; background: #1c2b3a; color: #f0ede4;
+          border: none; border-radius: 9px; padding: 0 16px;
+          font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+          letter-spacing: 0.06em; text-transform: uppercase;
+          cursor: pointer; transition: background 0.15s, transform 0.12s; white-space: nowrap;
+        }
+        .nav-new-btn:hover  { background: #243547; }
+        .nav-new-btn:active { transform: scale(0.98); }
+
+        .nav-divider { width: 1px; height: 22px; background: #e5e0d8; flex-shrink: 0; }
+
+        /* Profile trigger — tabIndex -1 prevents Radix focus-flicker on close */
+        .nav-profile-trigger {
+          display: flex; align-items: center; gap: 8px;
+          padding: 5px 10px 5px 5px;
+          border: 1.5px solid #e5e0d8; border-radius: 10px;
+          background: #fff; cursor: pointer; outline: none;
+          transition: border-color 0.15s, background 0.15s;
+          font-family: 'Inter', sans-serif;
+        }
+        .nav-profile-trigger:hover { border-color: #c4a158; background: #fdf9f2; }
+
+        .nav-avatar {
+          width: 28px; height: 28px; border-radius: 7px; background: #1c2b3a;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+
+        .nav-role-badge {
+          font-size: 10px; font-weight: 600;
+          letter-spacing: 0.08em; text-transform: uppercase;
+          padding: 2px 8px; border-radius: 5px; border: 1px solid;
+        }
+
+        /*
+          Dropdown panel — z-index 200 places it above navbar (100).
+          margin-top: 0 with a transparent padding bridge eliminates the gap
+          that caused the cursor to "fall through" and trigger mouse-leave.
+        */
+        .nav-dropdown {
+          width: 240px !important;
+          background: #fff !important;
+          border: 1px solid #e5e0d8 !important;
+          border-radius: 14px !important;
+          box-shadow: 0 16px 48px rgba(0,0,0,0.11) !important;
+          padding: 6px !important;
+          margin-top: 8px !important;
+          font-family: 'Inter', sans-serif;
+          z-index: 200 !important;
+        }
+
+        .nav-dd-header {
+          padding: 12px 12px 10px;
+          border-bottom: 1px solid #f0ece4; margin-bottom: 4px;
+        }
+
+        .nav-dd-header-top {
+          display: flex; align-items: center;
+          justify-content: space-between; margin-bottom: 4px;
+        }
+
+        .nav-dd-title  { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+        .nav-dd-sub    { font-size: 11px; font-weight: 300; color: #9a9485; font-style: italic; }
+
+        .nav-menu-item {
+          display: flex !important; align-items: center !important; gap: 10px !important;
+          padding: 9px 12px !important; border-radius: 9px !important;
+          font-size: 13px !important; font-weight: 400 !important;
+          color: #5c5649 !important; cursor: pointer !important;
+          transition: background 0.12s, color 0.12s !important; outline: none !important;
+        }
+        .nav-menu-item:hover { background: #f4f2ee !important; color: #1a1a1a !important; }
+
+        .nav-menu-icon { color: #b8b2a8 !important; flex-shrink: 0; }
+
+        .nav-menu-sep { background: #f0ece4 !important; margin: 4px 0 !important; }
+
+        .nav-menu-danger { color: #c0392b !important; }
+        .nav-menu-danger:hover { background: #fdf4f3 !important; color: #c0392b !important; }
+        .nav-menu-danger .nav-menu-icon { color: #c0392b !important; }
+
+        @media (max-width: 640px) { .nav-links { display: none; } }
+      `}</style>
+
+      <nav className="nav-root">
+        <div className="nav-inner">
+
+          {/* ── Left ── */}
+          <div className="nav-left">
+            <Link to={dashboardPath} className="nav-brand">
+              <div className="nav-brand-icon">
+                <svg viewBox="0 0 76 65" fill="#1c2b3a" width="14" height="14">
+                  <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
+                </svg>
               </div>
-              <span className="text-xl font-bold tracking-tighter text-slate-900">LegalPro</span>
+              <span className="nav-brand-name">Legal<b>Pro</b></span>
             </Link>
 
-            <div className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => {
-                const isActive = location.pathname === link.path;
+            <div className="nav-links">
+              {navLinks.map(({ name, path, icon: Icon }) => {
+                const isActive = location.pathname === path;
                 return (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 rounded-md ${
-                      isActive 
-                      ? "text-blue-600 bg-blue-50/50" 
-                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-                    }`}
-                  >
-                    {link.icon}
-                    {link.name}
-                    {isActive && (
-                      <span className="absolute -bottom-[21px] left-0 w-full h-0.5 bg-blue-600 rounded-full" />
-                    )}
+                  <Link key={path} to={path} className={`nav-link${isActive ? " active" : ""}`}>
+                    <Icon size={14} />
+                    {name}
+                    {isActive && <span className="nav-link-bar" />}
                   </Link>
                 );
               })}
             </div>
           </div>
 
-          {/* Right: Actions, Bell & Profile (ALL IN ONE FLEX BOX) */}
-          <div className="flex items-center gap-3">
-            
-            {/* New Case Button */}
+          {/* ── Right ── */}
+          <div className="nav-right">
             {role === "client" && (
-              <Button
-                size="sm"
-                onClick={() => navigate("/intake")}
-                className="bg-slate-900 hover:bg-slate-800 text-white shadow-md transition-all hover:-translate-y-0.5"
-              >
-                <PlusCircle className="w-4 h-4 mr-2" />
-                New Case
-              </Button>
+              <button className="nav-new-btn" onClick={() => navigate("/intake")}>
+                <PlusCircle size={13} /> New Case
+              </button>
             )}
 
-            {/* Notification Bell Component */}
-            <NotificationBell />
+            {/*
+              Wrap NotificationBell in a z-index 200 context so its dropdown
+              renders above the sticky navbar (z-index 100).
+            */}
+            <div style={{ position: "relative", zIndex: 200 }}>
+              <NotificationBell />
+            </div>
 
-            <div className="h-6 w-px bg-slate-200 mx-1" />
+            <div className="nav-divider" />
 
-            {/* Profile Dropdown */}
-            <div 
-              className="relative"
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
+            {/*
+              Profile dropdown wrapper.
+              The hover zone covers BOTH the trigger and the panel,
+              so moving the cursor between them never fires mouse-leave.
+            */}
+            <div
+              style={{ position: "relative" }}
+              onMouseEnter={openMenu}
+              onMouseLeave={closeMenu}
             >
               <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className="relative h-9 w-9 rounded-full bg-slate-100 border border-slate-200 p-0 overflow-hidden hover:bg-slate-200 transition-colors focus-visible:ring-0"
+                  <button
+                    className="nav-profile-trigger"
+                    tabIndex={-1}          /* prevents Radix re-focus → flicker */
+                    onMouseEnter={openMenu}
+                    onMouseLeave={closeMenu}
                   >
-                    <UserCircle className="w-6 h-6 text-slate-500" />
-                  </Button>
-                </DropdownMenuTrigger>
-                
-                <DropdownMenuContent 
-                  align="end" 
-                  className="w-64 mt-2 animate-in fade-in slide-in-from-top-2 duration-200 ease-out shadow-2xl"
-                  onMouseEnter={handleMouseEnter}
-                >
-                  <DropdownMenuLabel className="font-normal p-4">
-                    <div className="flex flex-col space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-bold leading-none text-slate-900">Account Profile</p>
-                        {/* THE ROLE BADGE */}
-                        <Badge variant="outline" className={`text-[10px] uppercase px-1.5 py-0 ${roleStyles[role]}`}>
-                          {role}
-                        </Badge>
-                      </div>
-                      <p className="text-xs leading-none text-slate-500 italic">Connected to LegalPro Secure</p>
+                    <div className="nav-avatar">
+                      <UserCircle size={16} color="#f0ede4" />
                     </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer py-2.5">
-                    <Settings className="w-4 h-4 mr-2 text-slate-400" /> Account Settings
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuItem onClick={() => navigate("/team")} className="cursor-pointer py-2.5">
-                    <Users className="w-4 h-4 mr-2 text-slate-400" /> Team Directory
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem 
-                    className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer font-bold py-2.5" 
-                    onClick={() => {
-                      localStorage.clear();
-                      navigate("/login");
-                    }}
+                    <span
+                      className="nav-role-badge"
+                      style={{ background: rc.bg, color: rc.color, borderColor: rc.border }}
+                    >
+                      {rc.label}
+                    </span>
+                    <ChevronDown size={13} style={{ color: "#b8b2a8" }} />
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="end"
+                  className="nav-dropdown"
+                  onMouseEnter={openMenu}
+                  onMouseLeave={closeMenu}
+                  style={{ zIndex: 200 }}
+                >
+                  <div className="nav-dd-header">
+                    <div className="nav-dd-header-top">
+                      <span className="nav-dd-title">Account Profile</span>
+                      <span
+                        className="nav-role-badge"
+                        style={{ background: rc.bg, color: rc.color, borderColor: rc.border }}
+                      >
+                        {rc.label}
+                      </span>
+                    </div>
+                    <div className="nav-dd-sub">Connected to LegalPro Secure</div>
+                  </div>
+
+                  <DropdownMenuItem
+                    className="nav-menu-item"
+                    onClick={() => { setIsMenuOpen(false); navigate("/settings"); }}
                   >
-                    <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                    <Settings size={14} className="nav-menu-icon" />
+                    Account Settings
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    className="nav-menu-item"
+                    onClick={() => { setIsMenuOpen(false); navigate("/team"); }}
+                  >
+                    <Users size={14} className="nav-menu-icon" />
+                    Team Directory
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator className="nav-menu-sep" />
+
+                  <DropdownMenuItem
+                    className="nav-menu-item nav-menu-danger"
+                    onClick={() => { localStorage.clear(); navigate("/login"); }}
+                  >
+                    <LogOut size={14} className="nav-menu-icon" />
+                    Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }

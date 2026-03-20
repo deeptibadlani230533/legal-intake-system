@@ -1,40 +1,121 @@
 import { motion } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { TrendingUp, Minus } from "lucide-react";
 
-export default function StatCard({ title, value, icon: Icon, trend }) {
+export default function StatCard({ title, value, icon: Icon, trend, accent = "#1c2b3a" }) {
+  const hasTrend = !!trend;
+  const isFlat = trend === "Stable" || trend === "stable";
+
   return (
-    <motion.div
-      whileHover={{ y: -4 }} // Smoothly lifts the card up
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-    >
-      <Card className="relative group overflow-hidden border-slate-200/60 bg-white p-6 transition-all duration-300 hover:border-blue-500/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.12)]">
-        
-        {/* Subtle Background Glow Effect */}
-        <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-50/50 opacity-0 transition-opacity duration-500 group-hover:opacity-100 blur-2xl" />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Inter:wght@300;400;500;600&display=swap');
 
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-              {title}
-            </p>
-            <h3 className="text-3xl font-bold tracking-tight text-slate-900">
-              {value}
-            </h3>
-            
-            {trend && (
-              <div className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-                <ArrowUpRight className="w-3 h-3" />
-                <span>{trend} vs last month</span>
-              </div>
-            )}
+        .sc-card {
+          background: #fff;
+          border: 1px solid #e5e0d8;
+          border-radius: 18px;
+          padding: 24px 26px;
+          position: relative;
+          overflow: hidden;
+          font-family: 'Inter', sans-serif;
+          cursor: default;
+        }
+
+        .sc-top-bar {
+          position: absolute;
+          top: 0; left: 0; right: 0; height: 3px;
+          border-radius: 18px 18px 0 0;
+        }
+
+        .sc-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 18px;
+        }
+
+        .sc-label {
+          font-size: 11px; font-weight: 600;
+          color: #9a9485; letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .sc-icon-wrap {
+          width: 38px; height: 38px; border-radius: 10px;
+          display: flex; align-items: center; justify-content: center;
+          background: #f4f2ee;
+          transition: background 0.2s;
+          flex-shrink: 0;
+        }
+
+        .sc-value {
+          font-family: 'Playfair Display', serif;
+          font-size: 40px; font-weight: 400;
+          color: #1a1a1a; line-height: 1;
+          margin-bottom: 12px;
+          letter-spacing: -0.01em;
+        }
+
+        .sc-value.empty {
+          /* decorative dash instead of value */
+          font-size: 0;
+        }
+
+        .sc-dash {
+          width: 40px; height: 2px;
+          border-radius: 999px;
+          margin-bottom: 14px;
+        }
+
+        .sc-trend {
+          display: inline-flex; align-items: center; gap: 5px;
+          font-size: 11px; font-weight: 500;
+          padding: 3px 10px; border-radius: 999px;
+        }
+
+        .sc-trend.up   { background: rgba(74,124,89,0.08);   color: #4a7c59; }
+        .sc-trend.flat { background: rgba(156,148,133,0.12); color: #9a9485; }
+      `}</style>
+
+      <motion.div
+        whileHover={{ y: -3 }}
+        transition={{ type: "spring", stiffness: 320, damping: 22 }}
+      >
+        <div className="sc-card">
+          {/* Colored top accent bar */}
+          <div
+            className="sc-top-bar"
+            style={{ background: `linear-gradient(90deg, ${accent}, ${accent}44)` }}
+          />
+
+          {/* Label + Icon row */}
+          <div className="sc-top">
+            <span className="sc-label">{title}</span>
+            <div
+              className="sc-icon-wrap"
+              style={{ background: accent + "12" }}
+            >
+              {Icon && <Icon size={16} color={accent} />}
+            </div>
           </div>
 
-          <div className="rounded-xl bg-slate-50 p-3 text-slate-500 transition-colors duration-300 group-hover:bg-blue-600 group-hover:text-white shadow-sm">
-            <Icon size={20} />
-          </div>
+          {/* Value — show if provided, else decorative dash */}
+          {value !== undefined && value !== null ? (
+            <div className="sc-value">{value}</div>
+          ) : (
+            <div className="sc-dash" style={{ background: accent + "30" }} />
+          )}
+
+          {/* Trend pill */}
+          {hasTrend && (
+            <div className={`sc-trend ${isFlat ? "flat" : "up"}`}>
+              {!isFlat && <TrendingUp size={11} />}
+              {isFlat  && <Minus size={11} />}
+              {trend}
+            </div>
+          )}
         </div>
-      </Card>
-    </motion.div>
+      </motion.div>
+    </>
   );
 }

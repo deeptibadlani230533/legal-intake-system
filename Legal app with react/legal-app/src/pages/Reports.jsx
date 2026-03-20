@@ -1,130 +1,97 @@
 import { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell
+  ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
-
-import { Download, FileText, Filter, TrendingUp, Briefcase, Activity, CheckCircle2, Loader2 } from "lucide-react";
+import {
+  Download, FileText, TrendingUp, Briefcase,
+  Activity, CheckCircle2, Loader2,
+} from "lucide-react";
 import Header from "../components/Header.jsx";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import jsPDF from "jspdf";
 
 export default function Reports() {
-const [stats, setStats] = useState(null);
-const [chartData, setChartData] = useState([]);
-const [cases, setCases] = useState([]);
-const [filterRange, setFilterRange] = useState("all");
-const [error, setError] = useState("");
-const [isExporting, setIsExporting] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [chartData, setChartData] = useState([]);
+  const [cases, setCases] = useState([]);
+  const [filterRange, setFilterRange] = useState("all");
+  const [error, setError] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
 
- useEffect(() => {
+  useEffect(() => {
+    const fetchCases = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/cases`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error("Failed to load reports.");
+        setCases(data);
+        processCases(data, filterRange);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+    fetchCases();
+  }, []);
 
-  const fetchCases = async () => {
-
-    try {
-
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/cases`, {
-        headers: { Authorization: `Bearer ${token}` }
+  const processCases = (data, range) => {
+    let filtered = [...data];
+    if (range !== "all") {
+      const now = new Date();
+      const days = Number(range);
+      filtered = data.filter((c) => {
+        if (!c.createdAt) return true;
+        const diff = (now - new Date(c.createdAt)) / (1000 * 60 * 60 * 24);
+        return diff <= days;
       });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error("Failed to load reports.");
-
-      setCases(data);
-      processCases(data, filterRange);
-
-    } catch (err) {
-      setError(err.message);
     }
-
+    const total = filtered.length;
+    const open = filtered.filter((c) => c.status === "open").length;
+    const closed = filtered.filter((c) => c.status === "closed").length;
+    const inProgress = filtered.filter((c) => c.status === "in_progress").length;
+    setStats({ total, open, closed, inProgress });
+    setChartData([
+      { name: "Open",        value: open,       color: "#4a7c59" },
+      { name: "In Progress", value: inProgress, color: "#1c2b3a" },
+      { name: "Closed",      value: closed,     color: "#c4a158" },
+    ]);
   };
 
-  fetchCases();
-
-}, []);
-
-const processCases = (data, range) => {
-
-  let filtered = [...data];
-
-  if (range !== "all") {
-
-    const now = new Date();
-    const days = Number(range);
-
-    filtered = data.filter(c => {
-
-      if (!c.createdAt) return true;
-
-      const created = new Date(c.createdAt);
-      const diff = (now - created) / (1000 * 60 * 60 * 24);
-
-      return diff <= days;
-
-    });
-
-  }
-
-  const total = filtered.length;
-  const open = filtered.filter(c => c.status === "open").length;
-  const closed = filtered.filter(c => c.status === "closed").length;
-  const inProgress = filtered.filter(c => c.status === "in_progress").length;
-
-  setStats({ total, open, closed, inProgress });
-
-  setChartData([
-    { name: "Open", value: open, color: "#10b981" },
-    { name: "In Progress", value: inProgress, color: "#3b82f6" },
-    { name: "Closed", value: closed, color: "#64748b" }
-  ]);
-
-};
-
-const handleFilterChange = (range) => {
-  setFilterRange(range);
-  processCases(cases, range);
-};
+  const handleFilterChange = (range) => {
+    setFilterRange(range);
+    processCases(cases, range);
+  };
 
   const handleExportPDF = () => {
     if (!stats) return;
     setIsExporting(true);
-
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    
-    // 1. BRANDED HEADER
-    doc.setFillColor(15, 23, 42); // Slate-900
+    doc.setFillColor(28, 43, 58);
     doc.rect(0, 0, pageWidth, 40, "F");
-    
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
     doc.text("LEGALPRO ANALYTICS", 20, 20);
-    
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text(`EXECUTIVE SUMMARY | ISSUED: ${new Date().toLocaleDateString()}`, 20, 30);
-
-    // 2. METRIC BOXES (DRAWN MANUALLY)
     let yPos = 55;
     doc.setTextColor(30, 41, 59);
     doc.setFontSize(14);
     doc.text("FIRM PERFORMANCE METRICS", 20, yPos);
-
     const metrics = [
-      { label: "Total Volume", val: stats.total },
-      { label: "Active Files", val: stats.open + stats.inProgress },
-      { label: "Resolved", val: stats.closed },
-      { label: "Success Rate", val: "94.2%" }
+      { label: "Total Volume",  val: stats.total },
+      { label: "Active Files",  val: stats.open + stats.inProgress },
+      { label: "Resolved",      val: stats.closed },
+      { label: "Success Rate",  val: "94.2%" },
     ];
-
     yPos += 15;
     metrics.forEach((m, i) => {
-      const x = 20 + (i * 45);
+      const x = 20 + i * 45;
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(x, yPos, 40, 25, 3, 3, "F");
       doc.setFontSize(8);
@@ -134,195 +101,473 @@ const handleFilterChange = (range) => {
       doc.setTextColor(15, 23, 42);
       doc.text(String(m.val), x + 5, yPos + 18);
     });
-
-    // 3. MANUAL BAR CHART DRAWING
     yPos += 45;
     doc.setFontSize(14);
     doc.text("CASE DISTRIBUTION BY STATUS", 20, yPos);
-    
     yPos += 15;
     const chartHeight = 50;
-    const maxValue = Math.max(...chartData.map(d => d.value)) || 10;
-
+    const maxValue = Math.max(...chartData.map((d) => d.value)) || 10;
     chartData.forEach((d, i) => {
       const barWidth = 30;
-      const spacing = 15;
-      const x = 30 + (i * (barWidth + spacing));
-      const barHeight = (d.value / maxValue) * chartHeight;
-      
-      // Draw Bar
+      const x = 30 + i * 45;
+      const barH = (d.value / maxValue) * chartHeight;
       doc.setFillColor(d.color);
-      doc.rect(x, yPos + (chartHeight - barHeight), barWidth, barHeight, "F");
-      
-      // Label
+      doc.rect(x, yPos + (chartHeight - barH), barWidth, barH, "F");
       doc.setFontSize(9);
       doc.setTextColor(71, 85, 105);
       doc.text(d.name, x, yPos + chartHeight + 8);
-      doc.text(String(d.value), x + (barWidth/2) - 2, yPos + (chartHeight - barHeight) - 3);
+      doc.text(String(d.value), x + barWidth / 2 - 2, yPos + (chartHeight - barH) - 3);
     });
-
-    // 4. STATUS ALLOCATION (MANUAL PIE LEGEND)
     yPos += 85;
     doc.setFontSize(14);
     doc.text("PIPELINE ALLOCATION", 20, yPos);
-    
     yPos += 10;
     chartData.forEach((d, i) => {
       doc.setFillColor(d.color);
-      doc.circle(25, yPos + (i * 10), 2, "F");
+      doc.circle(25, yPos + i * 10, 2, "F");
       doc.setFontSize(10);
       doc.setTextColor(30, 41, 59);
-      doc.text(`${d.name}: ${d.value} Matters`, 32, yPos + (i * 10) + 1.5);
+      doc.text(`${d.name}: ${d.value} Matters`, 32, yPos + i * 10 + 1.5);
     });
-
-    // 5. WATERMARK & FOOTER
-    doc.setTextColor(230, 230, 230);
-    doc.setFontSize(50);
-    
-
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184);
     doc.text("This document is generated by LegalPro Intelligence Engine. Privileged & Confidential.", 20, 285);
-    doc.text(`Page 1 of 1`, pageWidth - 35, 285);
-
-    doc.save(`LegalPro_Full_Report.pdf`);
+    doc.text("Page 1 of 1", pageWidth - 35, 285);
+    doc.save("LegalPro_Full_Report.pdf");
     setIsExporting(false);
   };
 
+  const filterLabel = {
+    all: "All Time", "7": "Last 7 Days", "30": "Last 30 Days", "90": "Last 90 Days",
+  };
+
   return (
-    <div className="flex-1 flex flex-col bg-[#F8FAFC] min-h-screen">
-      <Header title="Analytics & Intelligence">
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isExporting}
-            className="bg-white border-slate-200 shadow-sm hover:bg-slate-50 rounded-xl min-w-[130px]"
-            onClick={handleExportPDF}
-          >
-            {isExporting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin text-blue-600" /> Generating...</> : <><Download className="w-4 h-4 mr-2 text-blue-600" /> Export PDF</>}
-          </Button>
-          <select
-  className="text-sm border border-slate-300 rounded-xl px-3 py-2"
-  value={filterRange}
-  onChange={(e) => handleFilterChange(e.target.value)}
->
-  <option value="all">All Time</option>
-  <option value="7">Last 7 Days</option>
-  <option value="30">Last 30 Days</option>
-  <option value="90">Last 90 Days</option>
-</select>
-        </div>
-      </Header>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap');
+        * { box-sizing: border-box; }
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-6 lg:px-10 py-10 space-y-8">
-        {/* HERO SECTION */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 text-white rounded-2xl shadow-2xl p-10 border border-white/10">
-          <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none">
-            <TrendingUp size={240} />
+        .rp-root {
+          min-height: 100vh; display: flex; flex-direction: column;
+          background: #f4f2ee; font-family: 'Inter', sans-serif; position: relative;
+        }
+
+        .rp-bg-glow1 {
+          position: fixed; top: -100px; right: -100px;
+          width: 460px; height: 460px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(196,161,88,0.07) 0%, transparent 70%);
+          pointer-events: none; z-index: 0;
+        }
+        .rp-bg-glow2 {
+          position: fixed; bottom: -100px; left: -80px;
+          width: 400px; height: 400px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(28,43,58,0.06) 0%, transparent 70%);
+          pointer-events: none; z-index: 0;
+        }
+
+        .rp-main {
+          flex: 1; width: 100%; max-width: 1200px;
+          margin: 0 auto; padding: 40px 32px 60px;
+          position: relative; z-index: 1;
+          display: flex; flex-direction: column; gap: 28px;
+        }
+
+        /* ── Hero Banner ── */
+        .rp-hero {
+          background: #1c2b3a;
+          border-radius: 20px;
+          padding: 40px 44px;
+          position: relative; overflow: hidden;
+        }
+
+        .rp-hero-glow {
+          position: absolute; top: -60px; right: -60px;
+          width: 300px; height: 300px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(196,161,88,0.15) 0%, transparent 70%);
+          pointer-events: none;
+        }
+
+        .rp-hero-icon-bg {
+          position: absolute; right: 36px; bottom: -20px;
+          opacity: 0.05; pointer-events: none;
+        }
+
+        .rp-hero-tag {
+          display: inline-flex; align-items: center; gap: 7px;
+          background: rgba(196,161,88,0.12);
+          border: 1px solid rgba(196,161,88,0.25);
+          border-radius: 999px; padding: 5px 13px;
+          margin-bottom: 16px;
+        }
+
+        .rp-hero-tag-text {
+          font-size: 10px; font-weight: 600; color: #c4a158;
+          letter-spacing: 0.18em; text-transform: uppercase;
+        }
+
+        .rp-hero-title {
+          font-family: 'Playfair Display', serif;
+          font-size: clamp(28px, 3.5vw, 42px); font-weight: 400;
+          color: #f0ede4; line-height: 1.15; margin: 0 0 10px;
+          letter-spacing: -0.01em;
+        }
+
+        .rp-hero-title em { font-style: italic; color: #c4a158; }
+
+        .rp-hero-sub {
+          font-size: 13px; font-weight: 300;
+          color: rgba(240,237,228,0.5); max-width: 400px; line-height: 1.7;
+        }
+
+        /* ── Filter row ── */
+        .rp-filter-row {
+          display: flex; align-items: center;
+          justify-content: space-between; flex-wrap: wrap; gap: 12px;
+        }
+
+        .rp-filter-label {
+          font-size: 12px; font-weight: 400; color: #9a9485;
+        }
+
+        .rp-filter-label span {
+          font-weight: 600; color: #1a1a1a; margin-left: 4px;
+        }
+
+        .rp-filter-select {
+          height: 38px;
+          background: #fff; border: 1.5px solid #e5e0d8;
+          border-radius: 9px; padding: 0 14px;
+          font-family: 'Inter', sans-serif;
+          font-size: 13px; font-weight: 400; color: #1a1a1a;
+          outline: none; cursor: pointer;
+          transition: border-color 0.15s;
+        }
+        .rp-filter-select:focus { border-color: #c4a158; }
+
+        .rp-export-btn {
+          display: flex; align-items: center; gap: 7px;
+          height: 38px; background: #fff;
+          border: 1.5px solid #e5e0d8; border-radius: 9px;
+          font-family: 'Inter', sans-serif;
+          font-size: 12px; font-weight: 600; color: #1c2b3a;
+          letter-spacing: 0.06em; text-transform: uppercase;
+          padding: 0 16px; cursor: pointer;
+          transition: border-color 0.15s, background 0.15s;
+        }
+        .rp-export-btn:hover:not(:disabled) { border-color: #c4a158; background: #fdf9f2; }
+        .rp-export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── Metric Cards ── */
+        .rp-metrics-grid {
+          display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+        }
+        @media (max-width: 900px) { .rp-metrics-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { .rp-metrics-grid { grid-template-columns: 1fr; } }
+
+        .rp-metric-card {
+          background: #fff; border: 1px solid #e5e0d8;
+          border-radius: 16px; padding: 22px 22px 18px;
+          position: relative; overflow: hidden;
+          transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .rp-metric-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 32px rgba(0,0,0,0.06);
+        }
+
+        .rp-metric-card.highlight {
+          background: #1c2b3a; border-color: #1c2b3a;
+        }
+
+        .rp-metric-card-bar {
+          position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        }
+
+        .rp-metric-top {
+          display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+        }
+
+        .rp-metric-icon {
+          width: 32px; height: 32px; border-radius: 8px;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+
+        .rp-metric-title {
+          font-size: 10px; font-weight: 600; color: #9a9485;
+          letter-spacing: 0.12em; text-transform: uppercase;
+        }
+
+        .rp-metric-card.highlight .rp-metric-title { color: rgba(196,161,88,0.8); }
+
+        .rp-metric-value {
+          font-family: 'Playfair Display', serif;
+          font-size: 38px; font-weight: 400;
+          color: #1a1a1a; line-height: 1; margin-bottom: 5px;
+        }
+
+        .rp-metric-card.highlight .rp-metric-value { color: #f0ede4; }
+
+        .rp-metric-sub {
+          font-size: 11px; font-weight: 300; color: #9a9485;
+        }
+
+        .rp-metric-card.highlight .rp-metric-sub { color: rgba(240,237,228,0.45); }
+
+        /* ── Charts Grid ── */
+        .rp-charts-grid {
+          display: grid; grid-template-columns: 1fr 360px; gap: 20px;
+          align-items: start;
+        }
+        @media (max-width: 900px) { .rp-charts-grid { grid-template-columns: 1fr; } }
+
+        .rp-chart-card {
+          background: #fff; border: 1px solid #e5e0d8;
+          border-radius: 18px; overflow: hidden;
+        }
+
+        .rp-chart-header {
+          padding: 20px 24px 14px; border-bottom: 1px solid #f0ece4;
+        }
+
+        .rp-chart-eyebrow {
+          font-size: 10px; font-weight: 600; color: #c4a158;
+          letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 5px;
+        }
+
+        .rp-chart-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 18px; font-weight: 500; color: #1a1a1a; margin: 0;
+        }
+
+        .rp-chart-body { padding: 24px; }
+
+        /* Pie legend */
+        .rp-pie-legend { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+
+        .rp-pie-legend-row {
+          display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .rp-pie-legend-left { display: flex; align-items: center; gap: 8px; }
+
+        .rp-pie-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+        .rp-pie-name { font-size: 12px; font-weight: 400; color: #6b6355; }
+
+        .rp-pie-val { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+
+        /* Tooltip */
+        .rp-tooltip {
+          background: #fff; border: 1px solid #e5e0d8;
+          border-radius: 10px; padding: 10px 14px;
+          font-family: 'Inter', sans-serif;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        .rp-tooltip-label { font-size: 11px; font-weight: 600; color: #9a9485; margin-bottom: 3px; }
+        .rp-tooltip-val   { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+
+        .rp-footer {
+          text-align: center; padding: 24px;
+          font-size: 11px; font-weight: 400; color: #c0b9ae;
+          letter-spacing: 0.06em; border-top: 1px solid #ede9e2;
+          position: relative; z-index: 1;
+        }
+      `}</style>
+
+      <div className="rp-root">
+        <div className="rp-bg-glow1" />
+        <div className="rp-bg-glow2" />
+
+        <Header title="Analytics & Intelligence" >
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <button
+              className="rp-export-btn"
+              disabled={isExporting}
+              onClick={handleExportPDF}
+            >
+              {isExporting
+                ? <><Loader2 size={13} style={{ animation: "spin 0.8s linear infinite" }} /> Generating…</>
+                : <><Download size={13} /> Export PDF</>}
+            </button>
+            <select
+              className="rp-filter-select"
+              value={filterRange}
+              onChange={(e) => handleFilterChange(e.target.value)}
+            >
+              <option value="all">All Time</option>
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+            </select>
           </div>
-          <div className="relative z-10 space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-[10px] font-bold uppercase tracking-widest mb-2">
-              <Activity size={12} /> Live Performance Data
+        </Header>
+
+        <main className="rp-main">
+
+          {/* ── Hero Banner ── */}
+          <div className="rp-hero">
+            <div className="rp-hero-glow" />
+            <div className="rp-hero-icon-bg">
+              <TrendingUp size={220} color="#fff" />
             </div>
-            <h1 className="text-4xl font-bold tracking-tight">Executive Analytics</h1>
-            <p className="text-slate-300 max-w-md text-sm leading-relaxed">Detailed analysis of firm metrics and operational efficiency.</p>
+            <div className="rp-hero-tag">
+              <Activity size={11} color="#c4a158" />
+              <span className="rp-hero-tag-text">Live Performance Data</span>
+            </div>
+            <h1 className="rp-hero-title">Executive <em>Analytics</em></h1>
+            <p className="rp-hero-sub">
+              Detailed analysis of firm metrics and operational efficiency across all active matters.
+            </p>
           </div>
-        </div>
 
-        <div className="text-xs text-slate-500 font-medium">
-  Showing data for: 
-  <span className="ml-1 text-slate-800 font-semibold">
-    {filterRange === "all" && "All Time"}
-    {filterRange === "7" && "Last 7 Days"}
-    {filterRange === "30" && "Last 30 Days"}
-    {filterRange === "90" && "Last 90 Days"}
-  </span>
-</div>
-
-        {/* METRICS GRID */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <SummarySmallCard title="Active Files" value={stats.open + stats.inProgress} subtitle="Under Review" icon={<Briefcase className="text-blue-600" />} />
-            <SummarySmallCard title="Closed Matters" value={stats.closed} subtitle="Total Resolved" icon={<CheckCircle2 className="text-emerald-600" />} />
-            <SummarySmallCard title="Firm Volume" value={stats.total} subtitle="Total Intake" icon={<FileText className="text-slate-600" />} />
-            <SummarySmallCard title="Success Rate" value="94.2%" subtitle="Benchmark KPI" icon={<TrendingUp className="text-white" />} isHighlighted />
+          {/* ── Filter context row ── */}
+          <div className="rp-filter-row">
+            <p className="rp-filter-label">
+              Showing data for:<span>{filterLabel[filterRange]}</span>
+            </p>
           </div>
-        )}
 
-        {/* CHARTS SECTION */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <Card className="lg:col-span-2 border-slate-200/60 shadow-sm bg-white rounded-2xl overflow-hidden">
-            <CardHeader className="border-b border-slate-50 bg-slate-50/30">
-              <CardTitle className="text-lg font-bold text-slate-800">Case Distribution</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-8 h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                  <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={45}>
-                    {chartData.map((entry, index) => <Cell key={index} fill={entry.color} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          {/* ── Metric Cards ── */}
+          {stats && (
+            <div className="rp-metrics-grid">
+              <MetricCard
+                title="Active Files"
+                value={stats.open + stats.inProgress}
+                sub="Under review"
+                icon={<Briefcase size={15} color="#1c2b3a" />}
+                iconBg="rgba(28,43,58,0.08)"
+                bar="linear-gradient(90deg,#1c2b3a,#1c2b3a55)"
+              />
+              <MetricCard
+                title="Closed Matters"
+                value={stats.closed}
+                sub="Total resolved"
+                icon={<CheckCircle2 size={15} color="#4a7c59" />}
+                iconBg="rgba(74,124,89,0.10)"
+                bar="linear-gradient(90deg,#4a7c59,#4a7c5955)"
+              />
+              <MetricCard
+                title="Firm Volume"
+                value={stats.total}
+                sub="Total intake"
+                icon={<FileText size={15} color="#c4a158" />}
+                iconBg="rgba(196,161,88,0.10)"
+                bar="linear-gradient(90deg,#c4a158,#c4a15855)"
+              />
+              <MetricCard
+                title="Success Rate"
+                value="94.2%"
+                sub="Benchmark KPI"
+                icon={<TrendingUp size={15} color="#f0ede4" />}
+                iconBg="rgba(255,255,255,0.15)"
+                bar="linear-gradient(90deg,#c4a158,#e2c07a)"
+                highlight
+              />
+            </div>
+          )}
 
-          <Card className="border-slate-200/60 shadow-sm bg-white rounded-2xl overflow-hidden">
-            <CardHeader className="border-b border-slate-50 bg-slate-50/30">
-              <CardTitle className="text-lg font-bold text-slate-800">Status Ratio</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[350px] flex flex-col items-center justify-center">
+          {/* ── Charts ── */}
+          <div className="rp-charts-grid">
 
-  <ResponsiveContainer width="100%" height={220}>
-    <PieChart>
-      <Pie
-        data={chartData}
-        innerRadius={60}
-        outerRadius={80}
-        paddingAngle={5}
-        dataKey="value"
-      >
-        {chartData.map((entry, index) => (
-          <Cell key={index} fill={entry.color} stroke="none" />
-        ))}
-      </Pie>
-      <Tooltip />
-    </PieChart>
-  </ResponsiveContainer>
+            {/* Bar Chart */}
+            <div className="rp-chart-card">
+              <div className="rp-chart-header">
+                <div className="rp-chart-eyebrow">Distribution</div>
+                <div className="rp-chart-title">Case Distribution by Status</div>
+              </div>
+              <div className="rp-chart-body">
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={chartData} barCategoryGap="35%">
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0ece4" />
+                    <XAxis
+                      dataKey="name" axisLine={false} tickLine={false}
+                      tick={{ fill: "#b8b2a8", fontSize: 12, fontFamily: "Inter" }}
+                    />
+                    <YAxis
+                      axisLine={false} tickLine={false}
+                      tick={{ fill: "#b8b2a8", fontSize: 12, fontFamily: "Inter" }}
+                    />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f4f2ee" }} />
+                    <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={52}>
+                      {chartData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
-  <div className="mt-4 space-y-2 px-6 w-full">
-    {chartData.map((d, i) => (
-      <div key={i} className="flex justify-between text-xs">
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
-          <span className="text-slate-500">{d.name}</span>
-        </div>
-        <span className="font-bold text-slate-700">{d.value}</span>
+            {/* Pie Chart */}
+            <div className="rp-chart-card">
+              <div className="rp-chart-header">
+                <div className="rp-chart-eyebrow">Allocation</div>
+                <div className="rp-chart-title">Status Ratio</div>
+              </div>
+              <div className="rp-chart-body">
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={chartData} innerRadius={58} outerRadius={80}
+                      paddingAngle={4} dataKey="value"
+                    >
+                      {chartData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} stroke="none" />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+
+                <div className="rp-pie-legend">
+                  {chartData.map((d, i) => (
+                    <div className="rp-pie-legend-row" key={i}>
+                      <div className="rp-pie-legend-left">
+                        <div className="rp-pie-dot" style={{ background: d.color }} />
+                        <span className="rp-pie-name">{d.name}</span>
+                      </div>
+                      <span className="rp-pie-val">{d.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </main>
+
+        <footer className="rp-footer">
+          LegalPro Management Systems &copy; 2026 &nbsp;·&nbsp; Tier III Security &nbsp;·&nbsp; AES-256 Encrypted
+        </footer>
+
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
-    ))}
-  </div>
+    </>
+  );
+}
 
-</CardContent>
-          </Card>
-        </div>
-      </main>
+/* ── Metric Card ── */
+function MetricCard({ title, value, sub, icon, iconBg, bar, highlight }) {
+  return (
+    <div className={`rp-metric-card${highlight ? " highlight" : ""}`}>
+      <div className="rp-metric-card-bar" style={{ background: bar }} />
+      <div className="rp-metric-top">
+        <div className="rp-metric-icon" style={{ background: iconBg }}>{icon}</div>
+        <span className="rp-metric-title">{title}</span>
+      </div>
+      <div className="rp-metric-value">{value}</div>
+      <div className="rp-metric-sub">{sub}</div>
     </div>
   );
 }
 
-function SummarySmallCard({ title, value, subtitle, icon, isHighlighted }) {
+/* ── Custom Recharts Tooltip ── */
+function CustomTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
   return (
-    <div className={`p-6 rounded-2xl border transition-all ${isHighlighted ? "bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-200" : "bg-white border-slate-200 shadow-sm"}`}>
-      <div className="flex items-center gap-4 mb-4">
-        <div className={`p-2 rounded-xl ${isHighlighted ? "bg-white/20" : "bg-slate-50"}`}>{icon}</div>
-        <p className={`text-[10px] font-bold uppercase tracking-widest ${isHighlighted ? "text-blue-100" : "text-slate-400"}`}>{title}</p>
-      </div>
-      <p className="text-3xl font-bold">{value}</p>
-      <p className={`text-xs mt-1 ${isHighlighted ? "text-blue-200" : "text-slate-500"}`}>{subtitle}</p>
+    <div className="rp-tooltip">
+      <div className="rp-tooltip-label">{label || payload[0]?.name}</div>
+      <div className="rp-tooltip-val">{payload[0]?.value} matters</div>
     </div>
   );
 }
