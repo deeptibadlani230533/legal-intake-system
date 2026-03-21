@@ -15,7 +15,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import DocumentSummary from "./pages/DocumentSummary";
 <Route path="/signup" element={<Signup />} />;
 import { CommandMenu } from "./components/CommandMenu";
-
+import CalendarPage from "./pages/CalendarPage";
 export default function App() {
   const token = localStorage.getItem("token");
   const location = useLocation();
@@ -62,6 +62,7 @@ export default function App() {
             path="/documents/:docId/summary"
             element={<DocumentSummary />}
           />
+          <Route path="/calendar" element={<CalendarPage />} />
         </Routes>
       </div>
     </div>

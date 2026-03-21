@@ -19,6 +19,7 @@ import {
 
 import DocumentManager from "../components/DocumentManager";
 import ActivityTimeline from "../components/ActivityTimeline";
+import CaseComments from "../components/CaseComments";   // ✅ FIXED: was ../pages/CaseComments
 
 const statusConfig = {
   open:        { label: "Open",        bg: "#edfaf2", color: "#2d7a4f", bar: "#2d7a4f" },
@@ -28,14 +29,13 @@ const statusConfig = {
 };
 
 // ══════════════════════════════════════════════════════
-//  PROFESSIONAL PDF GENERATOR
+//  PROFESSIONAL PDF GENERATOR  (unchanged)
 // ══════════════════════════════════════════════════════
 function generateProfessionalReport(caseData, id) {
   const doc  = new jsPDF({ unit: "mm", format: "a4" });
   const W    = doc.internal.pageSize.getWidth();
   const H    = doc.internal.pageSize.getHeight();
 
-  // Palette
   const NAVY   = [28,  43,  58 ];
   const GOLD   = [196, 161, 88 ];
   const GOLD_L = [240, 228, 188];
@@ -67,7 +67,6 @@ function generateProfessionalReport(caseData, id) {
     day: "2-digit", month: "long", year: "numeric",
   });
 
-  // ── helper: draw a colored pill ──
   const pill = (label, color, x, y) => {
     const tw = doc.getTextWidth(label);
     setFill(color);
@@ -78,7 +77,6 @@ function generateProfessionalReport(caseData, id) {
     return x + tw + 13;
   };
 
-  // ── helper: two-col info block ──
   const COL1 = 14, COL2 = W / 2 + 4, CW = W / 2 - 22;
   const infoBlock = (label, value, x, y) => {
     font("bold", 7);
@@ -91,45 +89,20 @@ function generateProfessionalReport(caseData, id) {
     return y + 5 + lines.length * 4.5 + 5;
   };
 
-  // ─────────────────────────────────────────────
-  //  PAGE 1
-  // ─────────────────────────────────────────────
-
-  // Full-width navy header
-  setFill(NAVY);
-  doc.rect(0, 0, W, 40, "F");
-
-  // Logo triangle
-  setFill(GOLD);
-  doc.triangle(14, 28, 23, 28, 18.5, 18, "F");
-
-  // Brand
-  font("bold", 18);
-  setTxt(WHITE);
-  doc.text("LegalPro", 28, 24);
-  font("normal", 7.5);
-  setTxt(GOLD_L);
-  doc.text("MANAGEMENT SYSTEMS", 28, 30);
-
-  // Right meta
-  font("normal", 7.5);
-  setTxt([190, 205, 220]);
+  setFill(NAVY); doc.rect(0, 0, W, 40, "F");
+  setFill(GOLD); doc.triangle(14, 28, 23, 28, 18.5, 18, "F");
+  font("bold", 18); setTxt(WHITE); doc.text("LegalPro", 28, 24);
+  font("normal", 7.5); setTxt(GOLD_L); doc.text("MANAGEMENT SYSTEMS", 28, 30);
+  font("normal", 7.5); setTxt([190, 205, 220]);
   doc.text("CONFIDENTIAL CASE REPORT", W - 14, 16, { align: "right" });
-  font("bold", 10);
-  setTxt(GOLD_L);
+  font("bold", 10); setTxt(GOLD_L);
   doc.text(`Case #${String(id).padStart(4, "0")}`, W - 14, 24, { align: "right" });
-  font("normal", 7.5);
-  setTxt([190, 205, 220]);
+  font("normal", 7.5); setTxt([190, 205, 220]);
   doc.text(`Generated: ${genDate}`, W - 14, 31, { align: "right" });
+  setFill(GOLD); doc.rect(0, 40, W, 2, "F");
 
-  // Gold accent stripe
-  setFill(GOLD);
-  doc.rect(0, 40, W, 2, "F");
-
-  // ── Case title + pills ──
   let y = 52;
-  font("bold", 18);
-  setTxt(NAVY);
+  font("bold", 18); setTxt(NAVY);
   const titleLines = doc.splitTextToSize(caseData.caseTitle, W - 28);
   doc.text(titleLines, 14, y);
   y += titleLines.length * 8 + 3;
@@ -137,123 +110,66 @@ function generateProfessionalReport(caseData, id) {
   const statusLabel   = (caseData.status || "open").replace("_", " ").toUpperCase();
   const priorityLabel = `${(caseData.priority || "MEDIUM").toUpperCase()} PRIORITY`;
   let px = 14;
-  px = pill(statusLabel,   statusBadgeColor, px, y);
-       pill(priorityLabel, priorityColor,    px, y);
+  px = pill(statusLabel, statusBadgeColor, px, y);
+       pill(priorityLabel, priorityColor, px, y);
   y += 11;
 
-  font("normal", 9);
-  setTxt(MUTED);
+  font("normal", 9); setTxt(MUTED);
   const openDate = new Date(caseData.createdAt).toLocaleDateString("en-IN", { dateStyle: "long" });
   doc.text(`Filed on ${openDate}`, 14, y);
   y += 9;
 
-  // Divider
-  setDraw([220, 215, 205]);
-  doc.setLineWidth(0.3);
-  doc.line(14, y, W - 14, y);
-  y += 8;
+  setDraw([220, 215, 205]); doc.setLineWidth(0.3);
+  doc.line(14, y, W - 14, y); y += 8;
 
-  // ── Case Narrative ──
-  font("bold", 10);
-  setTxt(NAVY);
-  doc.text("CASE NARRATIVE", 14, y);
-  setFill(GOLD);
-  doc.rect(14, y + 1.5, 30, 0.8, "F");
-  y += 8;
-
+  font("bold", 10); setTxt(NAVY); doc.text("CASE NARRATIVE", 14, y);
+  setFill(GOLD); doc.rect(14, y + 1.5, 30, 0.8, "F"); y += 8;
   const descLines = doc.splitTextToSize(caseData.description || "No description provided.", W - 30);
-  setFill(WARM);
-  doc.roundedRect(14, y - 3, W - 28, descLines.length * 5.3 + 8, 2, 2, "F");
-  font("italic", 9);
-  setTxt([92, 86, 73]);
-  doc.text(descLines, 19, y + 2);
+  setFill(WARM); doc.roundedRect(14, y - 3, W - 28, descLines.length * 5.3 + 8, 2, 2, "F");
+  font("italic", 9); setTxt([92, 86, 73]); doc.text(descLines, 19, y + 2);
   y += descLines.length * 5.3 + 13;
 
-  // ── Client Information ──
-  font("bold", 10);
-  setTxt(NAVY);
-  doc.text("CLIENT INFORMATION", 14, y);
-  setFill(GOLD);
-  doc.rect(14, y + 1.5, 38, 0.8, "F");
-  y += 9;
-
-  const y1a = infoBlock("Full Name",   caseData.clientName,  COL1, y);
-  const y1b = infoBlock("Email",       caseData.clientEmail, COL2, y);
+  font("bold", 10); setTxt(NAVY); doc.text("CLIENT INFORMATION", 14, y);
+  setFill(GOLD); doc.rect(14, y + 1.5, 38, 0.8, "F"); y += 9;
+  const y1a = infoBlock("Full Name", caseData.clientName, COL1, y);
+  const y1b = infoBlock("Email",     caseData.clientEmail, COL2, y);
   y = Math.max(y1a, y1b);
-
-  const y2a = infoBlock("Phone",       caseData.clientPhone,   COL1, y);
-  const y2b = infoBlock("Address",     caseData.clientAddress, COL2, y);
+  const y2a = infoBlock("Phone",   caseData.clientPhone,   COL1, y);
+  const y2b = infoBlock("Address", caseData.clientAddress, COL2, y);
   y = Math.max(y2a, y2b);
 
-  doc.setLineWidth(0.3);
-  setDraw([220, 215, 205]);
-  doc.line(14, y, W - 14, y);
-  y += 8;
+  doc.setLineWidth(0.3); setDraw([220, 215, 205]);
+  doc.line(14, y, W - 14, y); y += 8;
 
-  // ── Legal Parameters ──
-  font("bold", 10);
-  setTxt(NAVY);
-  doc.text("LEGAL PARAMETERS", 14, y);
-  setFill(GOLD);
-  doc.rect(14, y + 1.5, 34, 0.8, "F");
-  y += 9;
-
-  const y3a = infoBlock("Legal Category",  caseData.category,    COL1, y);
-  const y3b = infoBlock("Incident Date",   caseData.incidentDate, COL2, y);
+  font("bold", 10); setTxt(NAVY); doc.text("LEGAL PARAMETERS", 14, y);
+  setFill(GOLD); doc.rect(14, y + 1.5, 34, 0.8, "F"); y += 9;
+  const y3a = infoBlock("Legal Category", caseData.category,     COL1, y);
+  const y3b = infoBlock("Incident Date",  caseData.incidentDate, COL2, y);
   y = Math.max(y3a, y3b);
-
-  const y4a = infoBlock("Opposing Party",  caseData.opponentName, COL1, y);
-  const y4b = infoBlock("Case Status",     (caseData.status || "").replace("_", " "), COL2, y);
+  const y4a = infoBlock("Opposing Party", caseData.opponentName, COL1, y);
+  const y4b = infoBlock("Case Status",    (caseData.status || "").replace("_", " "), COL2, y);
   y = Math.max(y4a, y4b) + 4;
 
-  // ── Claim Valuation highlight ──
-  setFill(NAVY);
-  doc.roundedRect(14, y, W - 28, 24, 3, 3, "F");
-
-  font("bold", 8);
-  setTxt(GOLD_L);
-  doc.text("TOTAL CLAIM VALUATION", 22, y + 8);
-
-  font("bold", 16);
-  setTxt(WHITE);
+  setFill(NAVY); doc.roundedRect(14, y, W - 28, 24, 3, 3, "F");
+  font("bold", 8); setTxt(GOLD_L); doc.text("TOTAL CLAIM VALUATION", 22, y + 8);
+  font("bold", 16); setTxt(WHITE);
   doc.text(`INR ${Number(caseData.claimAmount).toLocaleString("en-IN")}`, 22, y + 18);
-
-  font("normal", 7.5);
-  setTxt([170, 190, 210]);
+  font("normal", 7.5); setTxt([170, 190, 210]);
   doc.text("Subject to legal audit and court determination", W - 16, y + 18, { align: "right" });
 
-  // ─────────────────────────────────────────────
-  //  PAGE 2 — Full Data Table
-  // ─────────────────────────────────────────────
   doc.addPage();
-
-  // Slim header repeat
-  setFill(NAVY);
-  doc.rect(0, 0, W, 17, "F");
-  font("bold", 9);
-  setTxt(WHITE);
-  doc.text("LegalPro — Case Report (Continued)", 14, 11);
-  font("normal", 7.5);
-  setTxt(GOLD_L);
-  doc.text(
-    `Case #${String(id).padStart(4, "0")}  ·  ${caseData.caseTitle}`,
-    W - 14, 11, { align: "right" },
-  );
-  setFill(GOLD);
-  doc.rect(0, 17, W, 1.5, "F");
+  setFill(NAVY); doc.rect(0, 0, W, 17, "F");
+  font("bold", 9); setTxt(WHITE); doc.text("LegalPro — Case Report (Continued)", 14, 11);
+  font("normal", 7.5); setTxt(GOLD_L);
+  doc.text(`Case #${String(id).padStart(4, "0")}  ·  ${caseData.caseTitle}`, W - 14, 11, { align: "right" });
+  setFill(GOLD); doc.rect(0, 17, W, 1.5, "F");
 
   y = 28;
-
-  font("bold", 10);
-  setTxt(NAVY);
-  doc.text("COMPLETE CASE RECORD", 14, y);
-  setFill(GOLD);
-  doc.rect(14, y + 1.5, 42, 0.8, "F");
-  y += 8;
+  font("bold", 10); setTxt(NAVY); doc.text("COMPLETE CASE RECORD", 14, y);
+  setFill(GOLD); doc.rect(14, y + 1.5, 42, 0.8, "F"); y += 8;
 
   autoTable(doc, {
-    startY: y,
-    margin: { left: 14, right: 14 },
+    startY: y, margin: { left: 14, right: 14 },
     head: [["Field", "Details"]],
     body: [
       ["Case Title",       caseData.caseTitle],
@@ -264,6 +180,7 @@ function generateProfessionalReport(caseData, id) {
       ["Date Filed",       new Date(caseData.createdAt).toLocaleDateString("en-IN", { dateStyle: "long" })],
       ["Incident Date",    caseData.incidentDate],
       ["Claim Amount",     `INR ${Number(caseData.claimAmount).toLocaleString("en-IN")}`],
+      ["Assigned Lawyer",  caseData.assignedLawyer?.name || "Not assigned"],
       ["— CLIENT", ""],
       ["Client Name",      caseData.clientName],
       ["Client Email",     caseData.clientEmail],
@@ -275,104 +192,51 @@ function generateProfessionalReport(caseData, id) {
       ["Case Narrative",   caseData.description || "No description provided."],
     ],
     theme: "plain",
-    headStyles: {
-      fillColor: NAVY, textColor: WHITE, fontStyle: "bold",
-      fontSize: 9, halign: "left",
-      cellPadding: { top: 5, bottom: 5, left: 6, right: 6 },
-    },
-    bodyStyles: {
-      fontSize: 9, textColor: [51, 51, 51],
-      cellPadding: { top: 4, bottom: 4, left: 6, right: 6 },
-      lineColor: [230, 225, 215], lineWidth: 0.3,
-    },
-    columnStyles: {
-      0: { fontStyle: "bold", textColor: NAVY, fillColor: WARM, cellWidth: 52 },
-      1: { cellWidth: "auto" },
-    },
+    headStyles: { fillColor: NAVY, textColor: WHITE, fontStyle: "bold", fontSize: 9, halign: "left", cellPadding: { top: 5, bottom: 5, left: 6, right: 6 } },
+    bodyStyles: { fontSize: 9, textColor: [51, 51, 51], cellPadding: { top: 4, bottom: 4, left: 6, right: 6 }, lineColor: [230, 225, 215], lineWidth: 0.3 },
+    columnStyles: { 0: { fontStyle: "bold", textColor: NAVY, fillColor: WARM, cellWidth: 52 }, 1: { cellWidth: "auto" } },
     didParseCell(data) {
       const v = String(data.cell.raw || "");
       if (v.startsWith("—")) {
-        data.cell.styles.fillColor  = NAVY;
-        data.cell.styles.textColor  = GOLD_L;
-        data.cell.styles.fontStyle  = "bold";
-        data.cell.styles.fontSize   = 8;
+        data.cell.styles.fillColor = NAVY; data.cell.styles.textColor = GOLD_L;
+        data.cell.styles.fontStyle = "bold"; data.cell.styles.fontSize = 8;
         data.cell.text = [v.replace("— ", "")];
       }
     },
   });
 
   y = doc.lastAutoTable.finalY + 14;
-
-  // ── Disclaimer ──
-  setFill(WARM);
-  doc.roundedRect(14, y, W - 28, 22, 2, 2, "F");
-  setDraw(GOLD);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(14, y, W - 28, 22, 2, 2, "S");
-
-  font("bold", 8);
-  setTxt(NAVY);
-  doc.text("LEGAL DISCLAIMER", 19, y + 7);
-  font("normal", 7.5);
-  setTxt([92, 86, 73]);
-  const disclaimer =
-    "This document is generated by the LegalPro Case Management System and is strictly " +
-    "confidential. It is intended solely for authorized personnel. Unauthorized distribution " +
-    "or reproduction is strictly prohibited under applicable laws.";
-  doc.text(doc.splitTextToSize(disclaimer, W - 40), 19, y + 13);
+  setFill(WARM); doc.roundedRect(14, y, W - 28, 22, 2, 2, "F");
+  setDraw(GOLD); doc.setLineWidth(0.5); doc.roundedRect(14, y, W - 28, 22, 2, 2, "S");
+  font("bold", 8); setTxt(NAVY); doc.text("LEGAL DISCLAIMER", 19, y + 7);
+  font("normal", 7.5); setTxt([92, 86, 73]);
+  doc.text(doc.splitTextToSize("This document is generated by the LegalPro Case Management System and is strictly confidential. It is intended solely for authorized personnel. Unauthorized distribution or reproduction is strictly prohibited under applicable laws.", W - 40), 19, y + 13);
 
   y += 30;
-
-  // ── Signature block ──
   if (y < H - 50) {
-    font("bold", 9);
-    setTxt(NAVY);
-    doc.text("AUTHORIZED SIGNATURES", 14, y);
-    setFill(GOLD);
-    doc.rect(14, y + 1.5, 44, 0.7, "F");
-    y += 10;
-
-    doc.setLineWidth(0.3);
-    setDraw([180, 175, 165]);
-    doc.line(14, y,      80, y);
-    doc.line(W - 80, y, W - 14, y);
-
-    font("normal", 8);
-    setTxt(MUTED);
+    font("bold", 9); setTxt(NAVY); doc.text("AUTHORIZED SIGNATURES", 14, y);
+    setFill(GOLD); doc.rect(14, y + 1.5, 44, 0.7, "F"); y += 10;
+    doc.setLineWidth(0.3); setDraw([180, 175, 165]);
+    doc.line(14, y, 80, y); doc.line(W - 80, y, W - 14, y);
+    font("normal", 8); setTxt(MUTED);
     doc.text("Lawyer / Counsel Signature", 14, y + 5);
     doc.text("Authorizing Partner / Admin", W - 14, y + 5, { align: "right" });
-
-    y += 14;
-    font("normal", 7.5);
+    y += 14; font("normal", 7.5);
     doc.text(`Date: ${genDate}`, 14, y);
-    doc.text(
-      `Report ID: LP-${String(id).padStart(6, "0")}-${Date.now().toString().slice(-5)}`,
-      W - 14, y, { align: "right" },
-    );
+    doc.text(`Report ID: LP-${String(id).padStart(6, "0")}-${Date.now().toString().slice(-5)}`, W - 14, y, { align: "right" });
   }
 
-  // ─────────────────────────────────────────────
-  //  Footer on every page
-  // ─────────────────────────────────────────────
   const totalPages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
-    setFill(NAVY);
-    doc.rect(0, H - 12, W, 12, "F");
-    font("normal", 7);
-    setTxt([170, 185, 200]);
-    doc.text(
-      "LegalPro Management Systems  ·  AES-256 Encrypted  ·  Tier III Security  ·  CONFIDENTIAL",
-      W / 2, H - 5, { align: "center" },
-    );
-    font("bold", 7);
-    setTxt(GOLD_L);
+    setFill(NAVY); doc.rect(0, H - 12, W, 12, "F");
+    font("normal", 7); setTxt([170, 185, 200]);
+    doc.text("LegalPro Management Systems  ·  AES-256 Encrypted  ·  Tier III Security  ·  CONFIDENTIAL", W / 2, H - 5, { align: "center" });
+    font("bold", 7); setTxt(GOLD_L);
     doc.text(`${i} / ${totalPages}`, W - 7, H - 5, { align: "right" });
   }
 
-  doc.save(
-    `LegalPro_Report_${caseData.caseTitle.replace(/\s+/g, "_")}_${String(id).padStart(4, "0")}.pdf`,
-  );
+  doc.save(`LegalPro_Report_${caseData.caseTitle.replace(/\s+/g, "_")}_${String(id).padStart(4, "0")}.pdf`);
 }
 
 // ══════════════════════════════════════════════════════
@@ -382,10 +246,10 @@ export default function CaseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [caseData, setCaseData]             = useState(null);
-  const [role, setRole]                     = useState(null);
+  const [caseData, setCaseData]               = useState(null);
+  const [role, setRole]                       = useState(null);
   const [activityRefresh, setActivityRefresh] = useState(0);
-  const [internalNote, setInternalNote]     = useState("");
+  const [internalNote, setInternalNote]       = useState("");
 
   useEffect(() => {
     const userRole = localStorage.getItem("role");
@@ -474,6 +338,7 @@ export default function CaseDetail() {
   }
 
   const sc = statusConfig[caseData.status] || statusConfig.open;
+  const assignedLawyer = caseData.assignedLawyer || null;
 
   return (
     <>
@@ -531,6 +396,21 @@ export default function CaseDetail() {
         .cd-select-trigger { width:100%; height:46px !important; background:#fff !important; border:1.5px solid #e5e0d8 !important; border-radius:10px !important; font-family:'Inter',sans-serif !important; font-size:13px !important; color:#1a1a1a !important; transition:border-color 0.15s !important; }
         .cd-select-trigger:focus { border-color:#c4a158 !important; }
         .cd-select-label { font-size:10px; font-weight:600; color:#9a9485; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; }
+
+        /* ── Assigned Lawyer card ── */
+        .cd-lawyer-card { background:#fff; border:1px solid #e5e0d8; border-radius:18px; overflow:hidden; }
+        .cd-lawyer-head { padding:14px 20px; border-bottom:1px solid #f0ece4; display:flex; align-items:center; gap:8px; }
+        .cd-lawyer-eyebrow { font-size:10px; font-weight:600; color:#c4a158; letter-spacing:0.15em; text-transform:uppercase; }
+        .cd-lawyer-body { padding:16px 20px; display:flex; align-items:center; gap:14px; }
+        .cd-lawyer-avatar { width:44px; height:44px; border-radius:12px; background:#1c2b3a; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .cd-lawyer-avatar-initials { font-size:15px; font-weight:700; color:#f0ede4; letter-spacing:0.04em; }
+        .cd-lawyer-name { font-family:'Playfair Display',serif; font-size:16px; font-weight:500; color:#1a1a1a; margin-bottom:3px; }
+        .cd-lawyer-role-badge { display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:600; color:#2859a0; background:#eef4fd; border:1px solid #bdd3f5; border-radius:5px; padding:2px 8px; letter-spacing:0.06em; text-transform:uppercase; }
+        .cd-lawyer-email { font-size:11px; font-weight:300; color:#9a9485; margin-top:4px; }
+        .cd-lawyer-unassigned { padding:16px 20px; display:flex; align-items:center; gap:10px; }
+        .cd-lawyer-unassigned-icon { width:36px; height:36px; border-radius:9px; background:#f4f2ee; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .cd-lawyer-unassigned-text { font-size:12px; font-weight:400; color:#b8b2a8; }
+
         .cd-footer { text-align:center; padding:24px; font-size:11px; font-weight:400; color:#c0b9ae; letter-spacing:0.06em; border-top:1px solid #ede9e2; position:relative; z-index:1; }
       `}</style>
 
@@ -546,8 +426,11 @@ export default function CaseDetail() {
           </div>
 
           <div className="cd-grid">
-            {/* LEFT */}
+
+            {/* ── LEFT COLUMN ── */}
             <div className="cd-left">
+
+              {/* Overview */}
               <div className="cd-card">
                 <div className="cd-card-top-bar" style={{ background:`linear-gradient(90deg,${sc.bar},${sc.bar}66)` }} />
                 <div className="cd-card-header">
@@ -574,6 +457,7 @@ export default function CaseDetail() {
                 </div>
               </div>
 
+              {/* Client Information */}
               <div className="cd-card">
                 <div className="cd-card-header">
                   <div className="cd-card-eyebrow"><User size={11}/> Client Profile</div>
@@ -582,10 +466,10 @@ export default function CaseDetail() {
                 <div className="cd-card-body">
                   <div className="cd-info-grid">
                     {[
-                      ["Full Name",           <User size={13} className="cd-info-value-icon"/>,  caseData.clientName],
-                      ["Email Address",       <Mail size={13} className="cd-info-value-icon"/>,  caseData.clientEmail],
-                      ["Phone Number",        <Phone size={13} className="cd-info-value-icon"/>, caseData.clientPhone],
-                      ["Residential Address", <MapPin size={13} className="cd-info-value-icon"/>,caseData.clientAddress],
+                      ["Full Name",           <User size={13} className="cd-info-value-icon"/>,   caseData.clientName],
+                      ["Email Address",       <Mail size={13} className="cd-info-value-icon"/>,   caseData.clientEmail],
+                      ["Phone Number",        <Phone size={13} className="cd-info-value-icon"/>,  caseData.clientPhone],
+                      ["Residential Address", <MapPin size={13} className="cd-info-value-icon"/>, caseData.clientAddress],
                     ].map(([lbl,icon,val]) => (
                       <div key={lbl}>
                         <div className="cd-info-label">{lbl}</div>
@@ -596,6 +480,7 @@ export default function CaseDetail() {
                 </div>
               </div>
 
+              {/* Legal Parameters */}
               <div className="cd-card">
                 <div className="cd-card-header">
                   <div className="cd-card-eyebrow"><Scale size={11}/> Legal Details</div>
@@ -626,11 +511,18 @@ export default function CaseDetail() {
                 </div>
               </div>
 
+              {/* Activity Timeline */}
               <ActivityTimeline caseId={id} refreshKey={activityRefresh} />
+
+              {/* Case Comments — ✅ correct import path now */}
+              <CaseComments caseId={id} />
+
             </div>
 
-            {/* RIGHT */}
+            {/* ── RIGHT COLUMN ── */}
             <div className="cd-right">
+
+              {/* Claim Valuation */}
               <div className="cd-claim-card">
                 <div className="cd-claim-bg-icon"><Scale size={130} color="#fff"/></div>
                 <div className="cd-claim-eyebrow">Claim Valuation</div>
@@ -638,6 +530,48 @@ export default function CaseDetail() {
                 <div className="cd-claim-secure"><ShieldCheck size={12} color="#4a7c59"/> Secure Legal Audit</div>
               </div>
 
+              {/* ── Assigned Lawyer Card ── always visible */}
+              <div className="cd-lawyer-card">
+                <div className="cd-lawyer-head">
+                  <Gavel size={12} color="#c4a158" />
+                  <span className="cd-lawyer-eyebrow">Assigned Counsel</span>
+                </div>
+
+                {assignedLawyer ? (
+                  <div className="cd-lawyer-body">
+                    <div className="cd-lawyer-avatar">
+                      <span className="cd-lawyer-avatar-initials">
+                        {assignedLawyer.name
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                          .slice(0, 2) || "L"}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="cd-lawyer-name">{assignedLawyer.name}</div>
+                      <div className="cd-lawyer-role-badge">
+                        <Shield size={9} /> Lawyer
+                      </div>
+                      {assignedLawyer.email && (
+                        <div className="cd-lawyer-email">{assignedLawyer.email}</div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="cd-lawyer-unassigned">
+                    <div className="cd-lawyer-unassigned-icon">
+                      <User size={16} color="#c8c2b8" />
+                    </div>
+                    <span className="cd-lawyer-unassigned-text">
+                      No lawyer assigned yet
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Strategy Notes (lawyer/admin only) */}
               {(role==="lawyer"||role==="admin") && (
                 <div className="cd-notes-card">
                   <div className="cd-notes-header">
@@ -645,14 +579,23 @@ export default function CaseDetail() {
                     <div className="cd-notes-badge"><Lock size={9}/> Internal Only</div>
                   </div>
                   <div className="cd-notes-body">
-                    <textarea className="cd-notes-textarea" placeholder="Type private case strategy or lawyer notes here…" value={internalNote} onChange={(e)=>setInternalNote(e.target.value)}/>
-                    <Button className="cd-btn-notes-save" onClick={saveInternalNote}><StickyNote size={12}/> Save Note</Button>
+                    <textarea
+                      className="cd-notes-textarea"
+                      placeholder="Type private case strategy or lawyer notes here…"
+                      value={internalNote}
+                      onChange={(e) => setInternalNote(e.target.value)}
+                    />
+                    <Button className="cd-btn-notes-save" onClick={saveInternalNote}>
+                      <StickyNote size={12}/> Save Note
+                    </Button>
                   </div>
                 </div>
               )}
 
+              {/* Document Manager */}
               <DocumentManager caseId={id} role={role}/>
 
+              {/* Lawyer Controls */}
               {role==="lawyer" && (
                 <div className="cd-sidebar-card">
                   <div className="cd-sidebar-card-header"><Gavel size={12}/> Lawyer Controls</div>
@@ -663,6 +606,7 @@ export default function CaseDetail() {
                 </div>
               )}
 
+              {/* Admin Controls */}
               {role==="admin" && (
                 <div className="cd-sidebar-card">
                   <div className="cd-sidebar-card-header"><Shield size={12}/> Administration</div>
@@ -685,6 +629,7 @@ export default function CaseDetail() {
                   </div>
                 </div>
               )}
+
             </div>
           </div>
         </main>

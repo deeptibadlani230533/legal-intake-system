@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   UserCircle, LogOut, Briefcase, LayoutDashboard,
-  PlusCircle, Settings, Users, ChevronDown,
+  PlusCircle, Settings, Users, ChevronDown, Calendar,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -28,13 +28,13 @@ export default function Navbar() {
 
   const rc = roleConfig[role] || roleConfig.user;
 
-  // Generous delay (220ms) lets the cursor travel from trigger → panel without gap-closing
   const openMenu  = () => { clearTimeout(closeTimer.current); setIsMenuOpen(true); };
   const closeMenu = () => { closeTimer.current = setTimeout(() => setIsMenuOpen(false), 220); };
 
   const navLinks = [
-    { name: "Dashboard",      path: dashboardPath, icon: LayoutDashboard },
-    { name: "Case Directory", path: "/cases",       icon: Briefcase       },
+    { name: "Dashboard",      path: dashboardPath,  icon: LayoutDashboard },
+    { name: "Case Directory", path: "/cases",        icon: Briefcase       },
+    { name: "Calendar",       path: "/calendar",     icon: Calendar        },
   ];
 
   return (
@@ -47,7 +47,7 @@ export default function Navbar() {
           background: #fff;
           border-bottom: 1px solid #e5e0d8;
           position: sticky; top: 0;
-          z-index: 100;   /* navbar layer */
+          z-index: 100;
           font-family: 'Inter', sans-serif;
         }
 
@@ -58,8 +58,7 @@ export default function Navbar() {
           justify-content: space-between; gap: 24px;
         }
 
-        /* ── Left ── */
-        .nav-left { display: flex; align-items: center; gap: 36px; }
+        .nav-left { display: flex; align-items: center; gap: 32px; }
 
         .nav-brand {
           display: flex; align-items: center; gap: 10px;
@@ -84,7 +83,7 @@ export default function Navbar() {
 
         .nav-link {
           display: flex; align-items: center; gap: 7px;
-          padding: 7px 14px; border-radius: 9px;
+          padding: 7px 13px; border-radius: 9px;
           font-size: 13px; font-weight: 500; color: #9a9485;
           text-decoration: none;
           transition: background 0.15s, color 0.15s;
@@ -93,11 +92,10 @@ export default function Navbar() {
         .nav-link:hover       { background: #f4f2ee; color: #1a1a1a; }
         .nav-link.active      { background: rgba(196,161,88,0.08); color: #1a1a1a; }
         .nav-link-bar {
-          position: absolute; bottom: -17px; left: 14px; right: 14px;
+          position: absolute; bottom: -17px; left: 13px; right: 13px;
           height: 2px; background: #c4a158; border-radius: 999px;
         }
 
-        /* ── Right ── */
         .nav-right { display: flex; align-items: center; gap: 10px; }
 
         .nav-new-btn {
@@ -113,7 +111,6 @@ export default function Navbar() {
 
         .nav-divider { width: 1px; height: 22px; background: #e5e0d8; flex-shrink: 0; }
 
-        /* Profile trigger — tabIndex -1 prevents Radix focus-flicker on close */
         .nav-profile-trigger {
           display: flex; align-items: center; gap: 8px;
           padding: 5px 10px 5px 5px;
@@ -135,11 +132,6 @@ export default function Navbar() {
           padding: 2px 8px; border-radius: 5px; border: 1px solid;
         }
 
-        /*
-          Dropdown panel — z-index 200 places it above navbar (100).
-          margin-top: 0 with a transparent padding bridge eliminates the gap
-          that caused the cursor to "fall through" and trigger mouse-leave.
-        */
         .nav-dropdown {
           width: 240px !important;
           background: #fff !important;
@@ -182,13 +174,13 @@ export default function Navbar() {
         .nav-menu-danger:hover { background: #fdf4f3 !important; color: #c0392b !important; }
         .nav-menu-danger .nav-menu-icon { color: #c0392b !important; }
 
-        @media (max-width: 640px) { .nav-links { display: none; } }
+        @media (max-width: 700px) { .nav-links { display: none; } }
       `}</style>
 
       <nav className="nav-root">
         <div className="nav-inner">
 
-          {/* ── Left ── */}
+          {/* Left */}
           <div className="nav-left">
             <Link to={dashboardPath} className="nav-brand">
               <div className="nav-brand-icon">
@@ -201,7 +193,8 @@ export default function Navbar() {
 
             <div className="nav-links">
               {navLinks.map(({ name, path, icon: Icon }) => {
-                const isActive = location.pathname === path;
+                const isActive = location.pathname === path ||
+                  (path !== dashboardPath && location.pathname.startsWith(path));
                 return (
                   <Link key={path} to={path} className={`nav-link${isActive ? " active" : ""}`}>
                     <Icon size={14} />
@@ -213,7 +206,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* ── Right ── */}
+          {/* Right */}
           <div className="nav-right">
             {role === "client" && (
               <button className="nav-new-btn" onClick={() => navigate("/intake")}>
@@ -221,21 +214,12 @@ export default function Navbar() {
               </button>
             )}
 
-            {/*
-              Wrap NotificationBell in a z-index 200 context so its dropdown
-              renders above the sticky navbar (z-index 100).
-            */}
             <div style={{ position: "relative", zIndex: 200 }}>
               <NotificationBell />
             </div>
 
             <div className="nav-divider" />
 
-            {/*
-              Profile dropdown wrapper.
-              The hover zone covers BOTH the trigger and the panel,
-              so moving the cursor between them never fires mouse-leave.
-            */}
             <div
               style={{ position: "relative" }}
               onMouseEnter={openMenu}
@@ -245,17 +229,14 @@ export default function Navbar() {
                 <DropdownMenuTrigger asChild>
                   <button
                     className="nav-profile-trigger"
-                    tabIndex={-1}          /* prevents Radix re-focus → flicker */
+                    tabIndex={-1}
                     onMouseEnter={openMenu}
                     onMouseLeave={closeMenu}
                   >
                     <div className="nav-avatar">
                       <UserCircle size={16} color="#f0ede4" />
                     </div>
-                    <span
-                      className="nav-role-badge"
-                      style={{ background: rc.bg, color: rc.color, borderColor: rc.border }}
-                    >
+                    <span className="nav-role-badge" style={{ background: rc.bg, color: rc.color, borderColor: rc.border }}>
                       {rc.label}
                     </span>
                     <ChevronDown size={13} style={{ color: "#b8b2a8" }} />
@@ -272,30 +253,19 @@ export default function Navbar() {
                   <div className="nav-dd-header">
                     <div className="nav-dd-header-top">
                       <span className="nav-dd-title">Account Profile</span>
-                      <span
-                        className="nav-role-badge"
-                        style={{ background: rc.bg, color: rc.color, borderColor: rc.border }}
-                      >
+                      <span className="nav-role-badge" style={{ background: rc.bg, color: rc.color, borderColor: rc.border }}>
                         {rc.label}
                       </span>
                     </div>
                     <div className="nav-dd-sub">Connected to LegalPro Secure</div>
                   </div>
 
-                  <DropdownMenuItem
-                    className="nav-menu-item"
-                    onClick={() => { setIsMenuOpen(false); navigate("/settings"); }}
-                  >
-                    <Settings size={14} className="nav-menu-icon" />
-                    Account Settings
+                  <DropdownMenuItem className="nav-menu-item" onClick={() => { setIsMenuOpen(false); navigate("/settings"); }}>
+                    <Settings size={14} className="nav-menu-icon" /> Account Settings
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem
-                    className="nav-menu-item"
-                    onClick={() => { setIsMenuOpen(false); navigate("/team"); }}
-                  >
-                    <Users size={14} className="nav-menu-icon" />
-                    Team Directory
+                  <DropdownMenuItem className="nav-menu-item" onClick={() => { setIsMenuOpen(false); navigate("/team"); }}>
+                    <Users size={14} className="nav-menu-icon" /> Team Directory
                   </DropdownMenuItem>
 
                   <DropdownMenuSeparator className="nav-menu-sep" />
@@ -304,8 +274,7 @@ export default function Navbar() {
                     className="nav-menu-item nav-menu-danger"
                     onClick={() => { localStorage.clear(); navigate("/login"); }}
                   >
-                    <LogOut size={14} className="nav-menu-icon" />
-                    Sign Out
+                    <LogOut size={14} className="nav-menu-icon" /> Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
