@@ -6,6 +6,12 @@ const User = db.User;
 const OTP = db.OTP;
 
 async function login(email, password, reply) {
+console.log("USER FROM DB:", foundUser);
+console.log("HASH:", foundUser.passwordHash);
+console.log("ENTERED:", password);
+
+//const match = await bcrypt.compare(password, foundUser.passwordHash);
+console.log("MATCH:", match);
   const foundUser = await User.findOne({ where: { email } });
 
   if (!foundUser) {

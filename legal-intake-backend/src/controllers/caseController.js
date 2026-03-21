@@ -116,6 +116,34 @@ const getCaseActivity = async (req, reply) => {
   return reply.send(activity);
 };
 
+
+const { AuditLog, User, Case } = require("../models");
+
+const getAllActivity = async (req, res) => {
+  try {
+    const logs = await AuditLog.findAll({
+      order: [["createdAt", "DESC"]],
+      limit: 10,
+      include: [
+        { model: User, attributes: ["name"] },
+        { model: Case, attributes: ["caseTitle"] },
+      ],
+    });
+
+    const formatted = logs.map((log) => ({
+      message: `${log.User?.name || "System"} ${log.action} ${
+        log.Case ? `(${log.Case.caseTitle})` : ""
+      }`,
+      createdAt: log.createdAt,
+    }));
+
+    res.send(formatted);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "Failed to fetch activity" });
+  }
+};
+
 module.exports = {
   createCase,
   getAllCases,
@@ -128,5 +156,6 @@ module.exports = {
   startCase,
   closeCase,
   getLawyerCases,
-  getCaseActivity
+  getCaseActivity,
+  getAllActivity
 };

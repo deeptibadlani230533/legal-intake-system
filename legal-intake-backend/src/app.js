@@ -18,27 +18,23 @@ app.register(cors, {
 app.register(require("./plugins/jwt"));
 app.register(require('@fastify/multipart'), {
   limits: {
-    fileSize: 50 * 1024 * 1024 
+    fileSize: 50 * 1024 * 1024,
   }
-  
 });
-
-
 
 // Routes
-app.register(require("./routes/authRoutes.js"), { prefix: "/api/auth" });
+app.register(require("./routes/authRoutes.js"),      { prefix: "/api/auth" });
 app.register(require("./routes/protectedRoutes.js"), { prefix: "/api" });
-app.register(require("./routes/caseRoutes.js"), { prefix: "/api" });
-app.register(require("./routes/userRoutes.js"), { prefix: "/api" });
-app.register(require("./routes/matter.Routes.js"), { prefix: "/api" });
-app.register(require("./routes/task.Routes.js"), { prefix: "/api" });
-app.register(require("./routes/dashboardRoutes"), {
-  prefix: "/api/dashboard",
-});
-app.register(require("./routes/document.Routes.js"), {
-  prefix: "/api/documents",
-});
+app.register(require("./routes/caseRoutes.js"),      { prefix: "/api" });
+app.register(require("./routes/userRoutes.js"),      { prefix: "/api" });
+app.register(require("./routes/matterRoutes.js"),    { prefix: "/api" });
+app.register(require("./routes/taskRoutes.js"),      { prefix: "/api" });
+app.register(require("./routes/dashboardRoutes"),    { prefix: "/api/dashboard" });
+app.register(require("./routes/documentRoutes.js"),  { prefix: "/api/documents" });
 
+// ── New routes ──
+app.register(require("./routes/calendarRoutes.js"),  { prefix: "/api" });
+app.register(require("./routes/commentRoutes.js"),   { prefix: "/api" });
 
 // Health Check
 app.get("/health", async () => {

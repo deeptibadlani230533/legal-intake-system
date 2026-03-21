@@ -87,6 +87,15 @@ async function caseRoutes(app) {
   },
   caseController.getCaseActivity
 );
+
+
+app.get(
+  "/activity",
+  {
+    preHandler: [authenticate, allowRoles("admin", "lawyer", "client")]
+  },
+  caseController.getAllActivity
+);
 }
 
 module.exports = caseRoutes;

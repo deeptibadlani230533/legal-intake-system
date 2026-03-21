@@ -1,15 +1,19 @@
 const summarizeText = require("../services/geminiService");
 
-router.post("/summarize", async (req, res) => {
-  try {
-    const { text } = req.body;
+async function summarizeRoutes(app) {
+  app.post("/summarize", async (request, reply) => {
+    try {
+      const { text } = request.body;
 
-    const summary = await summarizeText(text);
+      const summary = await summarizeText(text);
 
-    res.json({ summary });
+      return { summary };
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to summarize text" });
-  }
-});
+    } catch (error) {
+      console.error(error);
+      reply.code(500).send({ error: "Failed to summarize text" });
+    }
+  });
+}
+
+module.exports = summarizeRoutes;

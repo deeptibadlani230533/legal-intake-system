@@ -1,6 +1,6 @@
 "use strict";
 
-const { Case } = require("../models");
+const { Case, User } = require("../models");
 const ApiError = require("../utils/apiError");
 const { logActivity } = require("./audit.service");
 
@@ -59,13 +59,22 @@ async function getAllCases(user) {
 /* ---------------- GET BY ID ---------------- */
 
 async function getCaseById(id, user) {
-  const caseItem = await Case.findByPk(id);
+  const caseItem = await Case.findByPk(id, {
+    include: [
+      {
+        model: User,           // make sure User is imported at the top of case.service.js
+        as: "assignedLawyer",  // matches the association alias in your Case model
+        attributes: ["id", "name", "email", "role"],
+      },
+    ],
+  });
+ 
   if (!caseItem) throw new ApiError(404, "Case not found");
-
+ 
   if (user.role === "client" && caseItem.userId !== user.id) {
     throw new ApiError(403, "Forbidden");
   }
-
+ 
   return caseItem;
 }
 

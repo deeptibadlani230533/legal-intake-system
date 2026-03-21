@@ -1,7 +1,8 @@
 const app = require("./app");
 const db = require("./models");
 const loadSecrets = require("./utils/secretsManager");
-
+console.log("DB NAME:", process.env.DB_NAME);
+console.log("DB HOST:", process.env.DB_HOST);
 async function startServer() {
   try {
 
