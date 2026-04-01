@@ -17,6 +17,7 @@ import DocumentSummary from "./pages/DocumentSummary";
 import { CommandMenu } from "./components/CommandMenu";
 import CalendarPage from "./pages/CalendarPage";
 import ChatPage from "./pages/ChatPage";
+import Billing from "./pages/BillingsPage";
 export default function App() {
   const token = localStorage.getItem("token");
   const location = useLocation();
@@ -65,6 +66,7 @@ export default function App() {
           />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/billing" element={<Billing />} />
         </Routes>
       </div>
     </div>
