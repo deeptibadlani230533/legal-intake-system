@@ -36,7 +36,7 @@ export default function Navbar() {
     { name: "Dashboard",      path: dashboardPath,  icon: LayoutDashboard },
     { name: "Case Directory", path: "/cases",        icon: Briefcase       },
     { name: "Calendar",       path: "/calendar",     icon: Calendar        },
-    { name: "Billings",       path: "/billings",     icon: Receipt         },
+    { name: "Billings",       path: "/billing",     icon: Receipt         },
     { name: "AI Assistant",   path: "/chat",         icon: MessageSquare   },
   ];
 
