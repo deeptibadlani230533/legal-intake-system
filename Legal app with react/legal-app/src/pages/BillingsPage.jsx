@@ -77,7 +77,13 @@ export default function Billing() {
   const [loading, setLoading] = useState(false);
   const [openMenu, setOpenMenu] = useState(null);
   const navigate = useNavigate();
-  const role = localStorage.getItem("role");
+  const [role, setRole] = useState(null);
+
+useEffect(() => {
+  const r = localStorage.getItem("role");
+  setRole(r);
+}, []);
+
 
   /* Derived stats */
   const totalRevenue   = invoices.reduce((s, i) => s + i.amount, 0);
