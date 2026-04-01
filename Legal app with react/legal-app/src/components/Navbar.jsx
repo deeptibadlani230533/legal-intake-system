@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   UserCircle, LogOut, Briefcase, LayoutDashboard,
   PlusCircle, Settings, Users, ChevronDown, Calendar,
+  MessageSquare
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -35,6 +36,7 @@ export default function Navbar() {
     { name: "Dashboard",      path: dashboardPath,  icon: LayoutDashboard },
     { name: "Case Directory", path: "/cases",        icon: Briefcase       },
     { name: "Calendar",       path: "/calendar",     icon: Calendar        },
+    { name: "AI Assistant",   path: "/chat",         icon: MessageSquare   },
   ];
 
   return (

@@ -16,6 +16,7 @@ import DocumentSummary from "./pages/DocumentSummary";
 <Route path="/signup" element={<Signup />} />;
 import { CommandMenu } from "./components/CommandMenu";
 import CalendarPage from "./pages/CalendarPage";
+import ChatPage from "./pages/ChatPage";
 export default function App() {
   const token = localStorage.getItem("token");
   const location = useLocation();
@@ -63,6 +64,7 @@ export default function App() {
             element={<DocumentSummary />}
           />
           <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/chat" element={<ChatPage />} />
         </Routes>
       </div>
     </div>
