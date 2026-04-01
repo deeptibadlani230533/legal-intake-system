@@ -1,4 +1,4 @@
-const { askGemini, askLegalQuestion } = require("../services/geminiservice");
+const { askGemini, askLegalQuestion } = require("../services/geminiService");
 
 async function chatHandler(request, reply) {
   try {
