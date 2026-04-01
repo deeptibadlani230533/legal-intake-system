@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronRight, LayoutDashboard, Briefcase, BarChart3, Users, Settings, FileText, ClipboardList } from "lucide-react";
+import { ChevronRight, LayoutDashboard, Briefcase, BarChart3, Users, Settings, FileText, ClipboardList,Calendar,Receipt } from "lucide-react";
 
 // Auto-generate breadcrumbs from the current path
 const routeMeta = {
@@ -10,6 +10,9 @@ const routeMeta = {
   "/team":           { label: "Personnel",        icon: Users           },
   "/settings":       { label: "Settings",         icon: Settings        },
   "/intake":         { label: "New Intake",       icon: ClipboardList   },
+
+  "/calendar":         { label: "Calendar",        icon: Calendar        },
+  "/billing":         { label: "Billing",         icon: Receipt         },
 };
 
 function getBreadcrumbs(pathname) {
