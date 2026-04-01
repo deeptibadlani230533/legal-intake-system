@@ -123,6 +123,7 @@ export default function DocumentManager({ caseId, role }) {
           width: 28px; height: 28px; border-radius: 7px;
           background: rgba(196,161,88,0.1);
           display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
         }
 
         .dm-header-title {
@@ -132,6 +133,7 @@ export default function DocumentManager({ caseId, role }) {
 
         .dm-upload-label {
           cursor: pointer;
+          flex-shrink: 0;
         }
 
         .dm-upload-btn {
@@ -215,7 +217,7 @@ export default function DocumentManager({ caseId, role }) {
           border-color: #ede9e2;
         }
 
-        .dm-doc-left { display: flex; align-items: center; gap: 10px; }
+        .dm-doc-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
 
         .dm-doc-icon-box {
           width: 34px; height: 34px; border-radius: 8px;
@@ -224,9 +226,11 @@ export default function DocumentManager({ caseId, role }) {
           flex-shrink: 0;
         }
 
+        .dm-doc-info { min-width: 0; flex: 1; }
+
         .dm-doc-name {
           font-size: 12px; font-weight: 600; color: #1a1a1a;
-          max-width: 160px; overflow: hidden;
+          overflow: hidden;
           text-overflow: ellipsis; white-space: nowrap;
           margin-bottom: 2px;
         }
@@ -240,25 +244,63 @@ export default function DocumentManager({ caseId, role }) {
           color: #c8c2b8; transition: color 0.12s;
           background: none; border: none; cursor: pointer;
           display: flex; align-items: center; padding: 4px;
-          border-radius: 6px;
+          border-radius: 6px; flex-shrink: 0; margin-left: 6px;
         }
 
         .dm-doc-download:hover { color: #c4a158; }
 
+        /* ── Modal filename display ── */
+        .dm-modal-filename {
+          font-family: 'Playfair Display', serif;
+          font-size: 17px;
+          font-weight: 500;
+          color: #1a1a1a;
+          line-height: 1.4;
+          /* Allow wrapping for long names */
+          word-break: break-all;
+          overflow-wrap: anywhere;
+          margin-top: 2px;
+        }
+
+        .dm-modal-filename-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: #f4f2ee;
+          border: 1px solid #e5e0d8;
+          border-radius: 8px;
+          padding: 6px 10px;
+          margin-top: 8px;
+          max-width: 100%;
+        }
+
+        .dm-modal-filename-chip-text {
+          font-size: 11px;
+          font-weight: 500;
+          color: #3a3530;
+          word-break: break-all;
+          overflow-wrap: anywhere;
+          line-height: 1.4;
+        }
+
         /* Dialog */
         .dm-modal-meta-row {
-          display: flex; justify-content: space-between;
+          display: flex; justify-content: space-between; align-items: center;
           padding: 10px 0;
           border-bottom: 1px solid #f0ece4;
+          gap: 12px;
         }
 
         .dm-modal-meta-label {
           font-size: 11px; font-weight: 500; color: #9a9485;
           letter-spacing: 0.06em; text-transform: uppercase;
+          flex-shrink: 0;
         }
 
         .dm-modal-meta-value {
           font-size: 12px; font-weight: 500; color: #1a1a1a;
+          text-align: right;
+          word-break: break-all;
         }
 
         .dm-modal-btn {
@@ -299,6 +341,8 @@ export default function DocumentManager({ caseId, role }) {
           font-size: 13px; font-weight: 300; color: #6b6355;
           line-height: 1.6; margin-bottom: 16px;
         }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
       <div className="dm-card">
@@ -345,12 +389,16 @@ export default function DocumentManager({ caseId, role }) {
           ) : (
             <div>
               {documents.map((doc) => (
-                <div key={doc.id} className="dm-doc-row" onClick={() => { setSelectedDoc(doc); setConfirmDelete(false); }}>
+                <div
+                  key={doc.id}
+                  className="dm-doc-row"
+                  onClick={() => { setSelectedDoc(doc); setConfirmDelete(false); }}
+                >
                   <div className="dm-doc-left">
                     <div className="dm-doc-icon-box">
                       {getFileIcon(doc.fileType, doc.originalName)}
                     </div>
-                    <div>
+                    <div className="dm-doc-info">
                       <div className="dm-doc-name">{doc.originalName}</div>
                       <div className="dm-doc-meta">
                         v{doc.version || 1} · {new Date(doc.createdAt).toLocaleDateString()}
@@ -371,27 +419,67 @@ export default function DocumentManager({ caseId, role }) {
       </div>
 
       {/* Document Detail Modal */}
-      <Dialog open={!!selectedDoc} onOpenChange={() => { setSelectedDoc(null); setConfirmDelete(false); }}>
+      <Dialog
+        open={!!selectedDoc}
+        onOpenChange={() => { setSelectedDoc(null); setConfirmDelete(false); }}
+      >
         {selectedDoc && (
-          <DialogContent style={{ fontFamily: "'Inter', sans-serif", maxWidth: 420, borderRadius: 18, border: "1px solid #e5e0d8" }}>
+          <DialogContent
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              maxWidth: 420,
+              width: "calc(100vw - 32px)",
+              borderRadius: 18,
+              border: "1px solid #e5e0d8",
+              overflow: "hidden",
+            }}
+          >
             <DialogHeader>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "#c4a158", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: 6 }}>
+              {/* Eyebrow label */}
+              <div style={{
+                fontSize: 10, fontWeight: 600, color: "#c4a158",
+                letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: 8,
+              }}>
                 {confirmDelete ? "Confirm Action" : "Document Details"}
               </div>
-              <DialogTitle style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 500, color: "#1a1a1a" }}>
-                {confirmDelete ? "Delete Document?" : selectedDoc.originalName}
-              </DialogTitle>
+
+              {confirmDelete ? (
+                /* Delete confirm: just show short heading */
+                <DialogTitle style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: 20, fontWeight: 500, color: "#1a1a1a",
+                }}>
+                  Delete Document?
+                </DialogTitle>
+              ) : (
+                /* Normal: file icon chip + wrappable name */
+                <div>
+                  {/* File type chip with icon */}
+                  <div className="dm-modal-filename-chip">
+                    <div style={{ flexShrink: 0 }}>
+                      {getFileIcon(selectedDoc.fileType, selectedDoc.originalName)}
+                    </div>
+                    <span className="dm-modal-filename-chip-text">
+                      {selectedDoc.originalName}
+                    </span>
+                  </div>
+                </div>
+              )}
             </DialogHeader>
 
             {!confirmDelete ? (
-              <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
                 <div className="dm-modal-meta-row">
                   <span className="dm-modal-meta-label">Version</span>
                   <span className="dm-modal-meta-value">v{selectedDoc.version || 1}</span>
                 </div>
                 <div className="dm-modal-meta-row">
                   <span className="dm-modal-meta-label">Uploaded On</span>
-                  <span className="dm-modal-meta-value">{new Date(selectedDoc.createdAt).toLocaleDateString()}</span>
+                  <span className="dm-modal-meta-value">
+                    {new Date(selectedDoc.createdAt).toLocaleDateString("en-IN", {
+                      day: "2-digit", month: "short", year: "numeric",
+                    })}
+                  </span>
                 </div>
                 <div className="dm-modal-meta-row" style={{ borderBottom: "none" }}>
                   <span className="dm-modal-meta-label">File Type</span>
@@ -399,22 +487,28 @@ export default function DocumentManager({ caseId, role }) {
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
-                  <button className="dm-modal-btn dm-modal-btn-primary"
-                    onClick={() => handleDownload(selectedDoc.id, selectedDoc.originalName)}>
+                  <button
+                    className="dm-modal-btn dm-modal-btn-primary"
+                    onClick={() => handleDownload(selectedDoc.id, selectedDoc.originalName)}
+                  >
                     <Download size={14} /> Download File
                   </button>
 
                   {(role === "admin" || role === "lawyer") && (
-                    <button className="dm-modal-btn dm-modal-btn-outline"
-                      onClick={() => openSummaryPage(selectedDoc)}>
+                    <button
+                      className="dm-modal-btn dm-modal-btn-outline"
+                      onClick={() => openSummaryPage(selectedDoc)}
+                    >
                       <Sparkles size={14} /> Generate AI Summary
                     </button>
                   )}
 
                   {role === "admin" && (
-                    <button className="dm-modal-btn dm-modal-btn-danger"
+                    <button
+                      className="dm-modal-btn dm-modal-btn-danger"
                       style={{ border: "1.5px solid #f5c6c2" }}
-                      onClick={() => setConfirmDelete(true)}>
+                      onClick={() => setConfirmDelete(true)}
+                    >
                       <Trash2 size={14} /> Delete Document
                     </button>
                   )}
@@ -423,15 +517,29 @@ export default function DocumentManager({ caseId, role }) {
             ) : (
               <div style={{ marginTop: 8 }}>
                 <p className="dm-confirm-text">
-                  This will permanently remove <strong>{selectedDoc.originalName}</strong> from the case file. This action cannot be undone.
+                  This will permanently remove{" "}
+                  <strong
+                    style={{
+                      wordBreak: "break-all",
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {selectedDoc.originalName}
+                  </strong>{" "}
+                  from the case file. This action cannot be undone.
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <button className="dm-modal-btn dm-modal-btn-confirm-danger" onClick={handleDelete}>
+                  <button
+                    className="dm-modal-btn dm-modal-btn-confirm-danger"
+                    onClick={handleDelete}
+                  >
                     <Trash2 size={14} /> Confirm Delete
                   </button>
-                  <button className="dm-modal-btn dm-modal-btn-outline"
+                  <button
+                    className="dm-modal-btn dm-modal-btn-outline"
                     style={{ border: "1.5px solid #e5e0d8" }}
-                    onClick={() => setConfirmDelete(false)}>
+                    onClick={() => setConfirmDelete(false)}
+                  >
                     Cancel
                   </button>
                 </div>
@@ -440,8 +548,6 @@ export default function DocumentManager({ caseId, role }) {
           </DialogContent>
         )}
       </Dialog>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   );
 }
