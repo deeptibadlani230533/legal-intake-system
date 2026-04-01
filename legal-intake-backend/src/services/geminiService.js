@@ -74,4 +74,38 @@ Use clear, professional language.
   return result.response.text();
 }
 
-module.exports = summarizeText;
+async function askLegalQuestion(question) {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const prompt = `
+You are a legal assistant.
+
+- Answer in simple language
+- Be clear and structured
+- Do NOT give final legal advice
+- Say "consult a lawyer" if needed
+
+Question: ${question}
+Answer:
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = result.response.text();
+
+    return response;
+
+  } catch (error) {
+  console.error("FULL GEMINI CHAT ERROR:");
+  console.error(error);
+  console.error(error.message);
+  console.error(error.stack);
+
+  return "Error generating response";
+}
+}
+
+module.exports = {
+  summarizeText,
+  askLegalQuestion
+};

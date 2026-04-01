@@ -31,7 +31,7 @@ app.register(require("./routes/matterRoutes.js"),    { prefix: "/api" });
 app.register(require("./routes/taskRoutes.js"),      { prefix: "/api" });
 app.register(require("./routes/dashboardRoutes"),    { prefix: "/api/dashboard" });
 app.register(require("./routes/documentRoutes.js"),  { prefix: "/api/documents" });
-
+app.register(require("./routes/chatRoutes.js"),     { prefix: "/api" });
 // ── New routes ──
 app.register(require("./routes/calendarRoutes.js"),  { prefix: "/api" });
 app.register(require("./routes/commentRoutes.js"),   { prefix: "/api" });
