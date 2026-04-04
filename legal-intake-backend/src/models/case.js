@@ -4,26 +4,32 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Case extends Model {
     static associate(models) {
-      // 🔹 Case belongs to Client (Owner)
-      Case.belongsTo(models.User, {
-        foreignKey: "userId",
-        as: "owner",
-      });
+  // 🔹 Case belongs to Client (Owner)
+  Case.belongsTo(models.User, {
+    foreignKey: "userId",
+    as: "owner",
+  });
 
-      // 🔹 Case belongs to Assigned Lawyer
-      Case.belongsTo(models.User, {
-        foreignKey: "assignedLawyerId",
-        as: "assignedLawyer",
-      });
+  // 🔹 Case belongs to Assigned Lawyer
+  Case.belongsTo(models.User, {
+    foreignKey: "assignedLawyerId",
+    as: "assignedLawyer",
+  });
 
-      // 🔹 Case has many Documents
-      Case.hasMany(models.Document, {
-        foreignKey: "caseId",
-        as: "documents",
-        onDelete: "CASCADE",
-      });
-    }
-  }
+  // 🔹 Case has many Documents
+  Case.hasMany(models.Document, {
+    foreignKey: "caseId",
+    as: "documents",
+    onDelete: "CASCADE",
+  });
+
+  // 🔥 ADD THIS HERE (correct place)
+  Case.hasMany(models.Invoice, {
+    foreignKey: "caseId",
+    as: "invoices",
+  });
+}
+};
 
   Case.init(
     {
