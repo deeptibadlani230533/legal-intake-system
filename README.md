@@ -92,7 +92,7 @@ Three distinct user personas — **Admin**, **Client**, and **Lawyer** — each 
 │                                                              │
 │   ┌─────────────────┐   REST    ┌──────────────────────┐    │
 │   │  React + Vite   │ ◄───────► │  Fastify Backend     │    │
-│   │   Port 5173     │           │     Port 5000        │    │
+│   │   Port 5173     │           │     Port 3000        │    │
 │   └─────────────────┘           └──────────┬───────────┘    │
 │                                            │                 │
 │                                 ┌──────────▼───────────┐    │
@@ -177,7 +177,7 @@ npm install
 # Terminal 1 — Backend
 cd backend
 npm run dev
-# Fastify starts on http://localhost:5000
+# Fastify starts on http://localhost:3000
 
 # Terminal 2 — Frontend
 cd frontend
@@ -193,7 +193,7 @@ Create a `.env` file at the root of your project (or inside `backend/`) with the
 
 ```env
 # ── Server ─────────────────────────────────────────────
-PORT=5000
+PORT=3000
 NODE_ENV=development
 
 # ── Database ────────────────────────────────────────────
