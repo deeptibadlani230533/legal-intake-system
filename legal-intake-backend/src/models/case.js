@@ -24,10 +24,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   // 🔥 ADD THIS HERE (correct place)
-  Case.hasMany(models.Invoice, {
-    foreignKey: "caseId",
-    as: "invoices",
-  });
+  
 }
 };
 
