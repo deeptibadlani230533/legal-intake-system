@@ -14,7 +14,7 @@ services:
 
   backend:
     build:
-      context: ./legal-intake-backend-spring-COMPLETE
+      context: ./legal-intake-backend-spring-COMPLETE/legal-intake-backend-spring
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
