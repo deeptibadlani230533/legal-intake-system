@@ -30,6 +30,8 @@ WORKDIR /app
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 
+RUN chmod +x mvnw
+
 # Download all dependencies (cached layer - won't re-download unless pom.xml changes)
 # This is the equivalent of: COPY package*.json ./ && RUN npm install
 RUN ./mvnw dependency:go-offline -q
